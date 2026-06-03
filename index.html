@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zahar · Dashboard</title>
+<link rel="icon" id="favicon" type="image/png" href="">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script>
+(function(){
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d');
+  const grd = ctx.createLinearGradient(0,0,64,64);
+  grd.addColorStop(0,'#7DD3FC'); grd.addColorStop(1,'#0284C7');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(8,8,48,48,12) : ctx.rect(8,8,48,48);
+  ctx.fill();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 32px Nunito,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Z', 32, 36);
+  document.getElementById('favicon').href = c.toDataURL('image/png');
+})();
+</script>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyClulIxVgenMx1wj3F-s1XWPrNC5AUdn5M",
+  authDomain: "focus-13625.firebaseapp.com",
+  projectId: "focus-13625",
+  storageBucket: "focus-13625.firebasestorage.app",
+  messagingSenderId: "216284277950",
+  appId: "1:216284277950:web:2de54d37c4752cfe6402ef"
+};
+try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error('Firebase init failed', e); }
+</script>
+
+<style>
+:root {
+  --font: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --easing: cubic-bezier(.4,0,.2,1);
+}
+
+html[data-theme="dark"] {
+  --bg: #0A1525;
+  --bg2: #0F1C32;
+  --s1: #14233F;
+  --s2: #1C2E50;
+  --border: #2F4575;
+  --border2: #4760A0;
+  --text: #FFFFFF;
+  --text2: #D3DDF5;
+  --text3: #93A2C9;
+  --accent: #FFFFFF;
+  --accent-grad: linear-gradient(135deg, #FFFFFF 0%, #B8D4FF 100%);
+  --accent-shadow: rgba(255,255,255,.22);
+  --accent-text: #0A1525;
+  --red: #F87171;
+  --shadow-card: 0 14px 36px rgba(0,0,0,.5);
+}
+html[data-theme="light"] {
+  --bg: #F8FBFF;
+  --bg2: #EEF5FF;
+  --s1: #FFFFFF;
+  --s2: #F0F7FF;
+  --border: #D9E5F5;
+  --border2: #B4CCE8;
+  --text: #0A1525;
+  --text2: #4D5D7A;
+  --text3: #8896AE;
+  --accent: #0EA5E9;
+  --accent-grad: linear-gradient(135deg, #38BDF8 0%, #0EA5E9 100%);
+  --accent-shadow: rgba(14,165,233,.32);
+  --accent-text: #FFFFFF;
+  --red: #DC2626;
+  --shadow-card: 0 10px 30px rgba(40,80,150,.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font);
+  background:
+    radial-gradient(ellipse at 15% 10%, rgba(56,189,248,.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 90%, rgba(56,189,248,.10) 0%, transparent 55%),
+    linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px 80px;
+  position: relative;
+}
+
+.theme-btn {
+  position: fixed;
+  top: 24px; right: 24px;
+  z-index: 50;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s var(--easing);
+}
+.theme-btn:hover { background: var(--s2); color: var(--text); border-color: var(--accent); }
+
+.hub {
+  width: 100%;
+  max-width: 760px;
+  text-align: center;
+}
+.hub-logo {
+  font-family: var(--font);
+  font-size: 88px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  display: inline-flex; align-items: baseline; gap: 4px;
+  line-height: 1; margin-bottom: 14px;
+  text-transform: uppercase;
+}
+.logo-text {
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+}
+.logo-dot { color: var(--accent); }
+
+.hub-tagline {
+  font-size: 16px;
+  color: var(--text2);
+  font-weight: 600;
+  margin-bottom: 40px;
+  letter-spacing: .02em;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin: 0 auto 36px;
+  padding: 16px 22px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  max-width: 440px;
+  box-shadow: var(--shadow-card);
+}
+.user-avatar {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background-size: cover; background-position: center;
+  background-color: var(--s2);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; color: var(--text2);
+  flex-shrink: 0;
+}
+.user-info { text-align: left; min-width: 0; flex: 1; }
+.user-name { font-size: 16px; font-weight: 800; color: var(--text); }
+.user-email {
+  font-size: 11px; color: var(--text2); font-family: var(--mono);
+  margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.hub-welcome {
+  font-size: 16px;
+  color: var(--text2);
+  max-width: 500px;
+  margin: 0 auto 28px;
+  line-height: 1.55;
+  font-weight: 500;
+}
+.google-signin {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 28px;
+  background: #fff;
+  color: #1f1f1f;
+  border: 1px solid #dadce0;
+  border-radius: 14px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 44px;
+  transition: all .18s var(--easing);
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+}
+.google-signin:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,.30); }
+.google-signin svg { width: 20px; height: 20px; }
+
+.hub-apps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-bottom: 30px;
+}
+.hub-app {
+  position: relative;
+  display: block;
+  padding: 30px 26px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  text-decoration: none;
+  color: var(--text);
+  text-align: left;
+  transition: all .22s var(--easing);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.hub-app::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--app-color, var(--accent-grad));
+  opacity: .75;
+  transition: opacity .2s var(--easing);
+}
+.hub-app:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  box-shadow: 0 28px 60px rgba(0,0,0,.55);
+}
+.hub-app:hover::before { opacity: 1; }
+.hub-app.locked {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.hub-app.locked:hover { transform: none; border-color: var(--border); box-shadow: var(--shadow-card); }
+
+.app-icon-wrap {
+  font-size: 38px;
+  margin-bottom: 14px;
+  line-height: 1;
+}
+.app-name {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: var(--app-color, var(--accent-grad));
+  -webkit-background-clip: text;
+          background-clip: text;
+  -webkit-text-fill-color: transparent;
+          color: transparent;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+.app-desc {
+  font-size: 13px;
+  color: var(--text2);
+  font-weight: 600;
+  line-height: 1.45;
+}
+.app-arrow {
+  position: absolute;
+  top: 30px; right: 26px;
+  font-size: 22px;
+  color: var(--text3);
+  transition: all .2s var(--easing);
+}
+.hub-app:hover .app-arrow {
+  color: var(--accent);
+  transform: translateX(6px);
+}
+.app-lock {
+  position: absolute;
+  top: 30px; right: 26px;
+  font-size: 18px;
+  color: var(--text3);
+}
+
+.hub-app.focus { --app-color: linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%); }
+.hub-app.wallet { --app-color: linear-gradient(135deg, #7DD3FC 0%, #0284C7 100%); }
+
+.signout-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  padding: 10px 26px;
+  border-radius: 99px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s var(--easing);
+  margin-top: 18px;
+}
+.signout-btn:hover { border-color: var(--red); color: var(--red); background: rgba(248,113,113,.08); }
+
+.footer {
+  position: fixed;
+  bottom: 14px; left: 0; right: 0;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: .08em;
+  pointer-events: none;
+}
+.footer .dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text3);
+  margin: 0 6px;
+  vertical-align: middle;
+}
+.footer.online .status-dot { background: #34D399; box-shadow: 0 0 6px #34D399; }
+.footer.offline .status-dot { background: var(--red); }
+
+@media (max-width: 600px) {
+  .hub-logo { font-size: 60px; }
+  .hub-tagline { font-size: 14px; margin-bottom: 28px; }
+  .hub-apps { grid-template-columns: 1fr; gap: 14px; }
+  .hub-app { padding: 24px 22px; }
+  .app-name { font-size: 24px; }
+  .theme-btn { top: 16px; right: 16px; width: 36px; height: 36px; }
+  .user-row { padding: 14px 18px; gap: 12px; }
+  .user-avatar { width: 42px; height: 42px; }
+  .google-signin { padding: 12px 22px; font-size: 14px; }
+}
+</style>
+</head>
+<body>
+
+<button class="theme-btn" id="theme-btn" title="Сменить тему">☀</button>
+
+<div class="hub">
+  <div class="hub-logo">
+    <span class="logo-text">ZAHAR</span><span class="logo-dot">.</span>
+  </div>
+  <div class="hub-tagline">Personal dashboard</div>
+
+  <div id="hub-auth"></div>
+</div>
+
+<div class="footer" id="footer">
+  v1 · Google sync<span class="dot status-dot"></span><span id="status-text">подключение...</span>
+</div>
+
+<script>
+'use strict';
+
+const THEME_KEY = 'hub_theme';
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  document.getElementById('theme-btn').textContent = saved === 'dark' ? '☀' : '🌙';
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem(THEME_KEY, next);
+  document.getElementById('theme-btn').textContent = next === 'dark' ? '☀' : '🌙';
+}
+document.getElementById('theme-btn').addEventListener('click', toggleTheme);
+initTheme();
+
+let auth = null, googleProvider = null;
+try {
+  if (typeof firebase !== 'undefined' && firebase.app) {
+    auth = firebase.auth();
+    googleProvider = new firebase.auth.GoogleAuthProvider();
+  }
+} catch(e) { console.error('Firebase init failed', e); }
+
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function setStatus(text, kind) {
+  const footer = document.getElementById('footer');
+  const st = document.getElementById('status-text');
+  if (st) st.textContent = text;
+  footer.classList.remove('online','offline');
+  if (kind) footer.classList.add(kind);
+}
+
+function render(user) {
+  const root = document.getElementById('hub-auth');
+
+  if (user) {
+    setStatus('вошёл как ' + (user.email || '?'), 'online');
+    const initials = (user.displayName || user.email || 'U')
+      .split(/\s+/).map(s => s[0] || '').join('').slice(0,2).toUpperCase();
+    const firstName = (user.displayName || '').split(/\s+/)[0] || 'друг';
+    root.innerHTML = `
+      <div class="user-row">
+        <div class="user-avatar" ${user.photoURL ? `style="background-image:url('${esc(user.photoURL)}')"` : ''}>
+          ${user.photoURL ? '' : esc(initials)}
+        </div>
+        <div class="user-info">
+          <div class="user-name">Привет, ${esc(firstName)}!</div>
+          <div class="user-email">${esc(user.email || '')}</div>
+        </div>
+      </div>
+      <div class="hub-apps">
+        <a href="focus.html" class="hub-app focus">
+          <div class="app-icon-wrap">🎯</div>
+          <div class="app-name">FOCUS.</div>
+          <div class="app-desc">Задачи · проекты · заметки · отчёты</div>
+          <div class="app-arrow">→</div>
+        </a>
+        <a href="wallet.html" class="hub-app wallet">
+          <div class="app-icon-wrap">💰</div>
+          <div class="app-name">WALLET.</div>
+          <div class="app-desc">Транзакции · бюджет · валюты</div>
+          <div class="app-arrow">→</div>
+        </a>
+      </div>
+      <button class="signout-btn" id="signout-btn">🚪 Выйти</button>
+    `;
+    document.getElementById('signout-btn').addEventListener('click', () => {
+      if (confirm('Выйти из аккаунта?')) auth.signOut();
+    });
+  } else {
+    setStatus('не вошёл', 'offline');
+    root.innerHTML = `
+      <div class="hub-welcome">
+        Войди через Google — твои задачи, заметки и финансы будут синхронизироваться между всеми устройствами автоматически.
+      </div>
+      <button class="google-signin" id="signin-btn">
+        <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+        Войти через Google
+      </button>
+      <div class="hub-apps">
+        <div class="hub-app focus locked">
+          <div class="app-icon-wrap">🎯</div>
+          <div class="app-name">FOCUS.</div>
+          <div class="app-desc">Задачи · проекты · заметки</div>
+          <div class="app-lock">🔒</div>
+        </div>
+        <div class="hub-app wallet locked">
+          <div class="app-icon-wrap">💰</div>
+          <div class="app-name">WALLET.</div>
+          <div class="app-desc">Транзакции · бюджет</div>
+          <div class="app-lock">🔒</div>
+        </div>
+      </div>
+    `;
+    document.getElementById('signin-btn').addEventListener('click', () => {
+      if (!auth) { alert('Firebase не загрузился. Проверь интернет и обнови страницу.'); return; }
+      auth.signInWithPopup(googleProvider).catch(err => {
+        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+          alert('Не удалось войти: ' + (err.message || err.code));
+        }
+      });
+    });
+  }
+}
+
+if (auth) {
+  auth.onAuthStateChanged(render);
+} else {
+  render(null);
+}
+</script>
+
+</body>
+</html>
