@@ -84,7 +84,7 @@ html[data-theme="light"] {
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+html, body { min-height: 100%; }
 body {
   font-family: var(--font);
   background:
@@ -97,8 +97,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 20px 80px;
+  padding: 40px 20px 80px;
   position: relative;
+  -webkit-overflow-scrolling: touch;
 }
 
 .theme-btn {
@@ -119,7 +120,7 @@ body {
 
 .hub {
   width: 100%;
-  max-width: 760px;
+  max-width: 980px;
   text-align: center;
 }
 .hub-logo {
@@ -209,14 +210,14 @@ body {
 
 .hub-apps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 18px;
   margin-bottom: 30px;
 }
 .hub-app {
   position: relative;
   display: block;
-  padding: 30px 26px;
+  padding: 28px 24px;
   background: var(--s1);
   border: 1px solid var(--border);
   border-radius: 22px;
@@ -249,12 +250,24 @@ body {
 .hub-app.locked:hover { transform: none; border-color: var(--border); box-shadow: var(--shadow-card); }
 
 .app-icon-wrap {
-  font-size: 38px;
+  font-size: 60px;
   margin-bottom: 14px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 64px;
+}
+.app-icon-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: block;
+  box-shadow: 0 8px 22px rgba(0,0,0,.28);
+  margin-bottom: 14px;
 }
 .app-name {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -263,7 +276,7 @@ body {
           background-clip: text;
   -webkit-text-fill-color: transparent;
           color: transparent;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1;
 }
 .app-desc {
@@ -271,10 +284,11 @@ body {
   color: var(--text2);
   font-weight: 600;
   line-height: 1.45;
+  padding-right: 28px;
 }
 .app-arrow {
   position: absolute;
-  top: 30px; right: 26px;
+  top: 28px; right: 24px;
   font-size: 22px;
   color: var(--text3);
   transition: all .2s var(--easing);
@@ -285,13 +299,31 @@ body {
 }
 .app-lock {
   position: absolute;
-  top: 30px; right: 26px;
+  top: 28px; right: 24px;
   font-size: 18px;
   color: var(--text3);
 }
 
+.soon-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 3px 9px;
+  background: rgba(167,139,250,.16);
+  color: #C4B5FD;
+  border: 1px solid #A78BFA;
+  border-radius: 99px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+html[data-theme="light"] .soon-badge { color: #6D28D9; background: rgba(167,139,250,.12); }
+
 .hub-app.focus { --app-color: linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%); }
 .hub-app.wallet { --app-color: linear-gradient(135deg, #7DD3FC 0%, #0284C7 100%); }
+.hub-app.password { --app-color: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
 
 .signout-btn {
   background: none;
@@ -329,16 +361,24 @@ body {
 .footer.online .status-dot { background: #34D399; box-shadow: 0 0 6px #34D399; }
 .footer.offline .status-dot { background: var(--red); }
 
-@media (max-width: 600px) {
+/* ── iPhone 16 / mobile ── */
+@media (max-width: 768px) {
+  body { padding: 28px 16px 90px; }
   .hub-logo { font-size: 60px; }
   .hub-tagline { font-size: 14px; margin-bottom: 28px; }
   .hub-apps { grid-template-columns: 1fr; gap: 14px; }
-  .hub-app { padding: 24px 22px; }
-  .app-name { font-size: 24px; }
+  .hub-app { padding: 22px 20px; }
+  .app-name { font-size: 22px; }
+  .app-icon-wrap { font-size: 32px; }
   .theme-btn { top: 16px; right: 16px; width: 36px; height: 36px; }
   .user-row { padding: 14px 18px; gap: 12px; }
   .user-avatar { width: 42px; height: 42px; }
-  .google-signin { padding: 12px 22px; font-size: 14px; }
+  .google-signin { padding: 12px 22px; font-size: 14px; margin-bottom: 36px; }
+  .hub-welcome { font-size: 14px; margin-bottom: 24px; }
+  .footer { font-size: 9px; }
+}
+@media (max-width: 400px) {
+  .hub-logo { font-size: 48px; }
 }
 </style>
 </head>
@@ -397,6 +437,46 @@ function setStatus(text, kind) {
   if (kind) footer.classList.add(kind);
 }
 
+function appCards(loggedIn) {
+  const focusCard = loggedIn
+    ? `<a href="focus.html" class="hub-app focus">
+         <div class="app-icon-wrap">🎯</div>
+         <div class="app-name">FOCUS.</div>
+         <div class="app-desc">Задачи · проекты · заметки · отчёты</div>
+         <div class="app-arrow">→</div>
+       </a>`
+    : `<div class="hub-app focus locked">
+         <div class="app-icon-wrap">🎯</div>
+         <div class="app-name">FOCUS.</div>
+         <div class="app-desc">Задачи · проекты · заметки</div>
+         <div class="app-lock">🔒</div>
+       </div>`;
+
+  const walletCard = loggedIn
+    ? `<a href="wallet.html" class="hub-app wallet">
+         <img class="app-icon-img" src="wallet-icon.png" alt="">
+         <div class="app-name">WALLET.</div>
+         <div class="app-desc">Транзакции · бюджет · валюты</div>
+         <div class="app-arrow">→</div>
+       </a>`
+    : `<div class="hub-app wallet locked">
+         <img class="app-icon-img" src="wallet-icon.png" alt="">
+         <div class="app-name">WALLET.</div>
+         <div class="app-desc">Транзакции · бюджет</div>
+         <div class="app-lock">🔒</div>
+       </div>`;
+
+  // Password card is always clickable — leads to "in development" page
+  const passwordCard = `<a href="password.html" class="hub-app password">
+       <div class="soon-badge">Soon</div>
+       <img class="app-icon-img" src="password-icon.png" alt="">
+       <div class="app-name">PASSWORD.</div>
+       <div class="app-desc">Менеджер паролей · скоро</div>
+     </a>`;
+
+  return focusCard + walletCard + passwordCard;
+}
+
 function render(user) {
   const root = document.getElementById('hub-auth');
 
@@ -415,20 +495,7 @@ function render(user) {
           <div class="user-email">${esc(user.email || '')}</div>
         </div>
       </div>
-      <div class="hub-apps">
-        <a href="focus.html" class="hub-app focus">
-          <div class="app-icon-wrap">🎯</div>
-          <div class="app-name">FOCUS.</div>
-          <div class="app-desc">Задачи · проекты · заметки · отчёты</div>
-          <div class="app-arrow">→</div>
-        </a>
-        <a href="wallet.html" class="hub-app wallet">
-          <div class="app-icon-wrap">💰</div>
-          <div class="app-name">WALLET.</div>
-          <div class="app-desc">Транзакции · бюджет · валюты</div>
-          <div class="app-arrow">→</div>
-        </a>
-      </div>
+      <div class="hub-apps">${appCards(true)}</div>
       <button class="signout-btn" id="signout-btn">🚪 Выйти</button>
     `;
     document.getElementById('signout-btn').addEventListener('click', () => {
@@ -444,20 +511,7 @@ function render(user) {
         <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
         Войти через Google
       </button>
-      <div class="hub-apps">
-        <div class="hub-app focus locked">
-          <div class="app-icon-wrap">🎯</div>
-          <div class="app-name">FOCUS.</div>
-          <div class="app-desc">Задачи · проекты · заметки</div>
-          <div class="app-lock">🔒</div>
-        </div>
-        <div class="hub-app wallet locked">
-          <div class="app-icon-wrap">💰</div>
-          <div class="app-name">WALLET.</div>
-          <div class="app-desc">Транзакции · бюджет</div>
-          <div class="app-lock">🔒</div>
-        </div>
-      </div>
+      <div class="hub-apps">${appCards(false)}</div>
     `;
     document.getElementById('signin-btn').addEventListener('click', () => {
       if (!auth) { alert('Firebase не загрузился. Проверь интернет и обнови страницу.'); return; }

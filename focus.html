@@ -167,13 +167,10 @@ button { font-family: inherit; }
 .brand-info {
   flex: 1; display: flex; align-items: baseline; gap: 4px;
   background: none; border: none; padding: 0;
-  cursor: pointer;
+  cursor: default;
   font-family: inherit;
   text-align: left;
-  transition: opacity .15s var(--easing);
 }
-.brand-info:hover { opacity: .8; }
-.brand-info:active { transform: scale(0.97); }
 .brand-title {
   font-family: var(--font);
   font-size: 28px;
@@ -2504,18 +2501,175 @@ html[data-theme="dark"] .col-count { background: rgba(255,255,255,.08); }
 .mr-empty-emoji { font-size: 60px; margin-bottom: 14px; line-height: 1; }
 .mr-empty-text { font-size: 13px; color: var(--text2); line-height: 1.5; max-width: 380px; margin: 8px auto 0; }
 
-/* Responsive (compact narrow window) */
+/* ── HUB BACK BUTTON ── */
+.hub-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all .15s var(--easing);
+}
+.hub-back-btn:hover {
+  background: var(--accent-grad);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  transform: translateX(-2px);
+}
+
+/* ── MOBILE HAMBURGER + BACKDROP ── */
+.mobile-hamburger {
+  display: none;
+  position: fixed;
+  top: 14px; left: 14px;
+  z-index: 300;
+  width: 44px; height: 44px;
+  background: var(--s1);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  cursor: pointer;
+  align-items: center; justify-content: center;
+  font-size: 22px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.mobile-hamburger:active { transform: scale(.95); }
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 400;
+  backdrop-filter: blur(4px);
+}
+.sidebar-backdrop.open { display: block; }
+
+/* ── RESPONSIVE — medium screens ── */
 @media (max-width: 1100px) {
   .cols { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 800px) {
-  .shell { padding: 0; gap: 0; }
-  .sidebar, .main { border-radius: 0; }
-  .cols { grid-template-columns: 1fr; }
+
+/* ── RESPONSIVE — mobile (iPhone 16: 393px) ── */
+@media (max-width: 768px) {
+  html, body {
+    overflow: auto !important;
+    height: auto !important;
+    min-height: 100vh;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .shell {
+    padding: 0; gap: 0;
+    height: auto;
+    min-height: 100vh;
+    display: block;
+    overflow: visible;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: min(330px, 88vw);
+    transform: translateX(-100%);
+    transition: transform .3s var(--easing);
+    z-index: 500;
+    border-radius: 0;
+    border-right: 1px solid var(--border);
+    border-top: none; border-bottom: none; border-left: none;
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar.open { transform: translateX(0); }
+
+  .main {
+    width: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 100vh;
+    display: block;
+    padding: 70px 14px 100px;
+  }
+  .main-head {
+    padding: 0 0 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    background: transparent;
+    border: none;
+  }
+  .proj-title-input { font-size: 18px; }
+  .filter-bar {
+    margin: 0 0 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .cols {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .col {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .col-body { overflow: visible !important; max-height: none !important; }
+  .ws-overview { overflow: visible !important; height: auto !important; padding: 0; }
+  .ws-overview-grid { grid-template-columns: 1fr; gap: 10px; }
+
+  .mobile-hamburger { display: flex; }
+
+  .clock-widget {
+    top: 14px; right: 14px; bottom: auto;
+    padding: 4px 9px;
+  }
+  .clock-time { font-size: 14px; }
+  .clock-date { font-size: 9px; }
+
+  .modal { max-width: 95vw; max-height: 90vh; }
+  .modal-backdrop { padding: 12px; }
+
+  input, textarea, select { font-size: 16px !important; }
+
+  .intro-screen { padding: 30px 20px; align-items: flex-start; }
+  .intro-logo { font-size: 56px; }
+  .intro-tagline { font-size: 17px; }
+  .intro-features .feature { font-size: 11px; padding: 6px 11px; }
+  .intro-start-btn { padding: 16px 50px; font-size: 14px; }
+
+  .auth-menu {
+    right: auto; left: 14px;
+    min-width: 220px;
+  }
+
+  .sidebar-brand { padding: 18px 14px 14px; }
+  .brand-title, .brand-dot { font-size: 24px; }
+}
+@media (max-width: 480px) {
+  .brand-title, .brand-dot { font-size: 22px; }
+  .sidebar { width: 92vw; }
 }
 </style>
 </head>
 <body>
+
+<button class="mobile-hamburger" id="mobile-hamburger" aria-label="Меню">☰</button>
+<div class="sidebar-backdrop" id="sidebar-backdrop"></div>
 
 <div class="shell">
 
@@ -2583,6 +2737,7 @@ html[data-theme="dark"] .col-count { background: rgba(255,255,255,.08); }
     </div>
 
     <div class="sidebar-foot">
+      <a href="index.html" class="hub-back-btn" title="К списку приложений">← Hub</a>
       <button class="btn btn-accent" data-action="open-report">Сгенерировать отчёт</button>
       <button class="btn btn-ghost" data-action="open-monthly">📅 Месячный отчёт</button>
       <div class="btn-row">
@@ -4690,15 +4845,23 @@ document.addEventListener('click', e => {
   // Theme button
   if (e.target.closest('#theme-btn')) { toggleTheme(); return; }
 
-  // FOCUS logo — open welcome / intro screen
-  if (e.target.closest('#brand-btn')) {
-    document.getElementById('intro-screen').classList.add('show');
+  // FOCUS logo — click intentionally disabled (was: open intro)
+
+  // Start button — close intro (kept in case intro ever shows)
+  if (e.target.closest('#intro-start-btn')) {
+    document.getElementById('intro-screen').classList.remove('show');
     return;
   }
 
-  // Start button — close intro
-  if (e.target.closest('#intro-start-btn')) {
-    document.getElementById('intro-screen').classList.remove('show');
+  // Mobile hamburger
+  if (e.target.closest('#mobile-hamburger')) {
+    document.querySelector('.sidebar').classList.toggle('open');
+    document.getElementById('sidebar-backdrop').classList.toggle('open');
+    return;
+  }
+  if (e.target.closest('#sidebar-backdrop')) {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('open');
     return;
   }
 });

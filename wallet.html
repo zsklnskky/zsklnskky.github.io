@@ -4,35 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WALLET.</title>
-<link rel="icon" id="favicon" type="image/png" href="">
+<link rel="icon" type="image/png" href="wallet-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script>
-(function(){
-  // WALLET logo: blue gradient coin with dollar-ish circle
-  const c = document.createElement('canvas');
-  c.width = c.height = 64;
-  const ctx = c.getContext('2d');
-  const grd = ctx.createLinearGradient(0,0,64,64);
-  grd.addColorStop(0,'#7DD3FC'); grd.addColorStop(1,'#0284C7');
-  ctx.fillStyle = grd;
-  ctx.beginPath();
-  ctx.arc(32, 32, 24, 0, Math.PI*2);
-  ctx.fill();
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  // Stylized "$" line: vertical with two curves
-  ctx.moveTo(32, 18);
-  ctx.lineTo(32, 46);
-  ctx.moveTo(24, 25);
-  ctx.bezierCurveTo(24, 21, 40, 21, 40, 27);
-  ctx.bezierCurveTo(40, 33, 24, 33, 24, 39);
-  ctx.bezierCurveTo(24, 45, 40, 45, 40, 41);
-  ctx.stroke();
-  document.getElementById('favicon').href = c.toDataURL('image/png');
-})();
-</script>
 
 <!-- ── FIREBASE SDK (auth + firestore for cross-device sync) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
@@ -391,6 +364,31 @@ button { font-family: inherit; }
   display: flex; flex-direction: column;
   gap: 7px;
   background: var(--bg2);
+}
+.hub-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all .15s var(--easing);
+}
+.hub-back-btn:hover {
+  background: var(--accent-grad);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  transform: translateX(-2px);
 }
 .btn {
   display: flex;
@@ -1572,6 +1570,7 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
 
     <!-- Footer -->
     <div class="sidebar-foot">
+      <a href="index.html" class="hub-back-btn" title="К списку приложений">← Hub</a>
       <button class="btn btn-accent" data-action="open-add">+ Добавить трату</button>
       <button class="btn btn-ghost" data-action="open-stats">📊 Статистика</button>
       <button class="btn btn-ghost" data-action="open-monthly">📅 Месячный отчёт</button>
