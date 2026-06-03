@@ -440,13 +440,13 @@ function setStatus(text, kind) {
 function appCards(loggedIn) {
   const focusCard = loggedIn
     ? `<a href="focus.html" class="hub-app focus">
-         <div class="app-icon-wrap">🎯</div>
+         <img class="app-icon-img" src="focus-icon.png" alt="">
          <div class="app-name">FOCUS.</div>
          <div class="app-desc">Задачи · проекты · заметки · отчёты</div>
          <div class="app-arrow">→</div>
        </a>`
     : `<div class="hub-app focus locked">
-         <div class="app-icon-wrap">🎯</div>
+         <img class="app-icon-img" src="focus-icon.png" alt="">
          <div class="app-name">FOCUS.</div>
          <div class="app-desc">Задачи · проекты · заметки</div>
          <div class="app-lock">🔒</div>

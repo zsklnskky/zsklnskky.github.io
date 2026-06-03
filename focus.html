@@ -4,33 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FOCUS · Productivity Tracker</title>
-<link rel="icon" id="favicon" type="image/png" href="">
+<link rel="icon" type="image/png" href="focus-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script>
-(function(){
-  // FOCUS logo: glossy blue C-ring with white dot center (matches sidebar SVG)
-  const c = document.createElement('canvas');
-  c.width = c.height = 64;
-  const ctx = c.getContext('2d');
-  // Background — fully transparent (skip fill)
-  // Blue gradient ring
-  const grd = ctx.createLinearGradient(0, 0, 64, 64);
-  grd.addColorStop(0, '#7DD3FC'); grd.addColorStop(1, '#0284C7');
-  ctx.strokeStyle = grd;
-  ctx.lineWidth = 9;
-  ctx.lineCap = 'round';
-  // Draw C-shape: arc from -45deg through 225deg (leaves gap on right)
-  ctx.beginPath();
-  ctx.arc(32, 32, 22, -Math.PI * 0.25, Math.PI * 1.25, false);
-  ctx.stroke();
-  // White dot center
-  ctx.beginPath();
-  ctx.arc(32, 32, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fill();
-  document.getElementById('favicon').href = c.toDataURL('image/png');
-})();
-</script>
 
 <!-- ── FIREBASE SDK (auth + firestore for cross-device sync) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
