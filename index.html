@@ -466,13 +466,19 @@ function appCards(loggedIn) {
          <div class="app-lock">🔒</div>
        </div>`;
 
-  // Password card is always clickable — leads to "in development" page
-  const passwordCard = `<a href="password.html" class="hub-app password">
-       <div class="soon-badge">Soon</div>
-       <img class="app-icon-img" src="password-icon.png" alt="">
-       <div class="app-name">PASSWORD.</div>
-       <div class="app-desc">Менеджер паролей · скоро</div>
-     </a>`;
+  const passwordCard = loggedIn
+    ? `<a href="password.html" class="hub-app password">
+         <img class="app-icon-img" src="password-icon.png" alt="">
+         <div class="app-name">PASSWORD.</div>
+         <div class="app-desc">Менеджер паролей · zero-knowledge</div>
+         <div class="app-arrow">→</div>
+       </a>`
+    : `<div class="hub-app password locked">
+         <img class="app-icon-img" src="password-icon.png" alt="">
+         <div class="app-name">PASSWORD.</div>
+         <div class="app-desc">Менеджер паролей</div>
+         <div class="app-lock">🔒</div>
+       </div>`;
 
   return focusCard + walletCard + passwordCard;
 }
