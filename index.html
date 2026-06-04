@@ -324,6 +324,7 @@ html[data-theme="light"] .soon-badge { color: #6D28D9; background: rgba(167,139,
 .hub-app.focus { --app-color: linear-gradient(135deg, #93C5FD 0%, #3B82F6 100%); }
 .hub-app.wallet { --app-color: linear-gradient(135deg, #7DD3FC 0%, #0284C7 100%); }
 .hub-app.password { --app-color: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+.hub-app.orbit { --app-color: linear-gradient(135deg, #FB7185 0%, #DB2777 100%); }
 
 .signout-btn {
   background: none;
@@ -480,7 +481,21 @@ function appCards(loggedIn) {
          <div class="app-lock">🔒</div>
        </div>`;
 
-  return focusCard + walletCard + passwordCard;
+  const orbitCard = loggedIn
+    ? `<a href="orbit.html" class="hub-app orbit">
+         <img class="app-icon-img" src="orbit-icon.png" alt="">
+         <div class="app-name">ORBIT.</div>
+         <div class="app-desc">Близкие люди · дни рождения · ИИ-поздравления</div>
+         <div class="app-arrow">→</div>
+       </a>`
+    : `<div class="hub-app orbit locked">
+         <img class="app-icon-img" src="orbit-icon.png" alt="">
+         <div class="app-name">ORBIT.</div>
+         <div class="app-desc">Близкие люди · напоминания</div>
+         <div class="app-lock">🔒</div>
+       </div>`;
+
+  return focusCard + walletCard + passwordCard + orbitCard;
 }
 
 function render(user) {
