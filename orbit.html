@@ -1763,55 +1763,126 @@ function toast(msg, kind = '') {
 }
 
 /* ============================================================
-   GEMINI AI
+   AI — supports Groq (works in RU/BY) + Gemini (geo-blocked in RU)
+   Auto-detects provider by API key prefix
    ============================================================ */
-async function generateGreeting(contact) {
-  if (!state.settings.geminiApiKey) {
-    return { error: 'NO_KEY' };
-  }
+function detectAIProvider(key) {
+  if (!key) return null;
+  const k = key.trim();
+  if (k.startsWith('gsk_')) return 'groq';
+  if (k.startsWith('sk-or-')) return 'openrouter';
+  if (k.startsWith('AIza')) return 'gemini';
+  return null;
+}
+
+function buildGreetingPrompt(contact) {
   const age = ageOn(contact.birthday);
   const ageNew = age != null ? age + 1 : null;
   const circle = CIRCLES[contact.circle]?.name || 'знакомый';
   const interests = (contact.interests || []).join(', ');
   const occupation = contact.occupation || '';
+  const tone = contact.circle === 'family' ? 'тёплый, личный'
+             : contact.circle === 'close' ? 'дружеский, можно с лёгким юмором'
+             : contact.circle === 'friend' ? 'дружелюбный'
+             : 'уважительный, тёплый';
 
-  let prompt = `Ты — друг, который пишет короткое, тёплое, искреннее поздравление с днём рождения по-русски для конкретного человека.\n\n`;
-  prompt += `КОГО ПОЗДРАВЛЯЕМ:\n`;
-  prompt += `- Имя: ${contact.name}\n`;
-  prompt += `- Кто он/она: ${circle}\n`;
-  if (ageNew) prompt += `- Исполняется: ${ageNew} лет\n`;
-  if (interests) prompt += `- Интересы/хобби: ${interests}\n`;
-  if (occupation) prompt += `- Чем занимается: ${occupation}\n`;
-  if (contact.notes) prompt += `- Заметки о человеке: ${contact.notes}\n`;
+  let p = 'Ты — друг, который пишет короткое, тёплое, искреннее поздравление с днём рождения по-русски для конкретного человека.\n\n';
+  p += 'КОГО ПОЗДРАВЛЯЕМ:\n';
+  p += `- Имя: ${contact.name}\n`;
+  p += `- Кто он/она: ${circle}\n`;
+  if (ageNew) p += `- Исполняется: ${ageNew} лет\n`;
+  if (interests) p += `- Интересы/хобби: ${interests}\n`;
+  if (occupation) p += `- Чем занимается: ${occupation}\n`;
+  if (contact.notes) p += `- Заметки о человеке: ${contact.notes}\n`;
+  p += '\nТРЕБОВАНИЯ:\n';
+  p += '- 2-4 предложения максимум\n';
+  p += '- БЕЗ штампов типа "счастья здоровья успехов в делах"\n';
+  p += '- Учти контекст (хобби, профессию) если есть\n';
+  p += `- Тон ${tone}\n`;
+  p += '- Пиши от первого лица, как будто я лично поздравляю\n';
+  p += '- Не используй смайлики/эмодзи\n';
+  p += '- ТОЛЬКО текст поздравления, без преамбулы\n\nПоздравление:';
+  return p;
+}
 
-  prompt += `\nТРЕБОВАНИЯ:\n`;
-  prompt += `- 2-4 предложения максимум\n`;
-  prompt += `- БЕЗ штампов типа "счастья здоровья успехов в делах"\n`;
-  prompt += `- Учти контекст (хобби, профессию) если есть\n`;
-  prompt += `- Тон ${contact.circle === 'family' ? 'тёплый, личный' : contact.circle === 'close' ? 'дружеский, можно с лёгким юмором' : contact.circle === 'friend' ? 'дружелюбный' : 'уважительный, тёплый'}\n`;
-  prompt += `- Пиши от первого лица, как будто я лично поздравляю\n`;
-  prompt += `- Не используй смайлики/эмодзи\n`;
-  prompt += `- ТОЛЬКО текст поздравления, без преамбулы\n\nПоздравление:`;
+async function callGroq(key, prompt) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + key,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 1.0,
+      max_tokens: 400
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim();
+}
 
-  try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(state.settings.geminiApiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 1.0, maxOutputTokens: 400 }
-        })
-      }
-    );
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      return { error: err.error?.message || `HTTP ${res.status}` };
+async function callGemini(key, prompt) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 1.0, maxOutputTokens: 400 }
+      })
     }
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!text) return { error: 'Пустой ответ от Gemini' };
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+}
+
+async function callOpenRouter(key, prompt) {
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + key,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://zsklnskky.github.io/',
+      'X-Title': 'ORBIT'
+    },
+    body: JSON.stringify({
+      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 1.0,
+      max_tokens: 400
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim();
+}
+
+async function generateGreeting(contact) {
+  const key = (state.settings.geminiApiKey || '').trim();
+  if (!key) return { error: 'NO_KEY' };
+  const provider = detectAIProvider(key);
+  if (!provider) return { error: 'Неизвестный формат ключа. Groq: gsk_..., OpenRouter: sk-or-..., Gemini: AIza...' };
+  const prompt = buildGreetingPrompt(contact);
+  try {
+    let text;
+    if (provider === 'groq') text = await callGroq(key, prompt);
+    else if (provider === 'openrouter') text = await callOpenRouter(key, prompt);
+    else text = await callGemini(key, prompt);
+    if (!text) return { error: 'Пустой ответ от ' + provider };
     return { text };
   } catch (e) {
     return { error: e.message };
@@ -2481,19 +2552,34 @@ function renderSettings() {
 
     <div class="section">
       <div class="section-head">
-        <div class="section-title">🤖 Gemini AI для поздравлений</div>
+        <div class="section-title">🤖 AI для поздравлений</div>
       </div>
       <div class="bio-card">
-        <div class="bio-label">Текущий ключ</div>
+        <div class="bio-label">Текущий ключ ${k ? `· провайдер: <strong style="color:var(--accent)">${detectAIProvider(k) || 'неизвестно'}</strong>` : ''}</div>
         <div class="bio-value" style="font-family:var(--mono)">${esc(masked)}</div>
         <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn-ghost" id="set-key-btn">Изменить ключ</button>
           ${k ? `<button class="btn-ghost" id="test-key-btn">🧪 Проверить</button>` : ''}
           ${k ? `<button class="btn-danger" id="clear-key-btn">Удалить</button>` : ''}
         </div>
-        <div style="margin-top:14px;font-size:12px;color:var(--text3);line-height:1.6">
-          Получить бесплатный ключ: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> → Create API key.<br>
-          Бесплатный тариф: 15 запросов/мин, 1500/день — для личного использования с запасом.
+        <div style="margin-top:18px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:12px">
+          <div style="font-weight:800;color:var(--accent);margin-bottom:8px">⭐ OpenRouter — самый надёжный для РФ/РБ</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            <a href="https://openrouter.ai/keys" target="_blank" style="font-weight:700">openrouter.ai/keys</a> → Sign in (Google/GitHub) → <strong>Create Key</strong> → копируй <code style="font-family:var(--mono);background:var(--s2);padding:1px 5px;border-radius:4px;font-size:11px">sk-or-...</code><br>
+            Llama 3.3 70B Free · регистрация без проблем
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:12px">
+          <div style="font-weight:700;color:var(--text2);margin-bottom:8px">⚡ Groq — самый быстрый (если signup пройдёт)</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.6">
+            <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> → ключ <code style="font-family:var(--mono);background:var(--s2);padding:1px 5px;border-radius:4px;font-size:11px">gsk_...</code> · иногда глючит регистрация
+          </div>
+        </div>
+        <div style="margin-top:10px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:12px">
+          <div style="font-weight:700;color:var(--text2);margin-bottom:8px">🌍 Gemini — только через VPN</div>
+          <div style="font-size:12px;color:var(--text3);line-height:1.6">
+            <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a> → ключ <code style="font-family:var(--mono);background:var(--s2);padding:1px 5px;border-radius:4px;font-size:11px">AIza...</code>
+          </div>
         </div>
       </div>
     </div>
