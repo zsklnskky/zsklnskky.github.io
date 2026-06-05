@@ -2753,35 +2753,36 @@ function renderSidebar() {
 
   const todayCount = getTodayBdays().length;
   const wishCount = (state.wishlist?.items || []).length;
+  const t = (k, fb) => (window.I18N ? I18N.t(k, fb) : fb);
   document.getElementById('nav-section').innerHTML = `
-    <div class="nav-title">Главное</div>
+    <div class="nav-title">${t('nav.main','Главное')}</div>
     <button class="nav-item ${currentView === 'today' ? 'active' : ''}" data-view="today">
       <span class="nav-item-icon">🏠</span>
-      <span class="nav-item-name">Сегодня</span>
+      <span class="nav-item-name">${t('nav.today','Сегодня')}</span>
       ${todayCount ? `<span class="nav-item-badge">🎂 ${todayCount}</span>` : ''}
     </button>
     <button class="nav-item ${currentView === 'contacts' ? 'active' : ''}" data-view="contacts">
       <span class="nav-item-icon">👥</span>
-      <span class="nav-item-name">Контакты</span>
+      <span class="nav-item-name">${t('nav.contacts','Контакты')}</span>
       <span class="nav-item-badge" style="background:var(--s2);color:var(--text2)">${total}</span>
     </button>
     <button class="nav-item ${currentView === 'birthdays' ? 'active' : ''}" data-view="birthdays">
       <span class="nav-item-icon">🎂</span>
-      <span class="nav-item-name">Дни рождения</span>
+      <span class="nav-item-name">${t('nav.bdays','Дни рождения')}</span>
     </button>
     <button class="nav-item ${currentView === 'wishlist' ? 'active' : ''}" data-view="wishlist">
       <span class="nav-item-icon">💝</span>
-      <span class="nav-item-name">Мой вишлист</span>
+      <span class="nav-item-name">${t('nav.my_wishlist','Мой вишлист')}</span>
       ${wishCount ? `<span class="nav-item-badge" style="background:var(--s2);color:var(--text2)">${wishCount}</span>` : ''}
     </button>
-    <div class="nav-title" style="margin-top:14px">Настройки</div>
+    <div class="nav-title" style="margin-top:14px">${t('nav.settings','Настройки')}</div>
     <button class="nav-item ${currentView === 'settings' ? 'active' : ''}" data-view="settings">
       <span class="nav-item-icon">⚙</span>
-      <span class="nav-item-name">Настройки</span>
+      <span class="nav-item-name">${t('nav.settings','Настройки')}</span>
     </button>
     <button class="nav-item" id="add-from-sidebar">
       <span class="nav-item-icon">＋</span>
-      <span class="nav-item-name">Новый контакт</span>
+      <span class="nav-item-name">${t('nav.new_contact','Новый контакт')}</span>
     </button>
   `;
 
@@ -4656,13 +4657,16 @@ document.addEventListener('visibilitychange', () => {
 /* ============ I18N ============ */
 (function () {
   const ORBIT_DICT = {
-    'hub_btn.tip':   { ru: 'К списку приложений', en: 'Back to dashboard' },
-    'nav.today':     { ru: 'Сегодня', en: 'Today' },
-    'nav.contacts':  { ru: 'Контакты', en: 'Contacts' },
-    'nav.bdays':     { ru: 'Дни рождения', en: 'Birthdays' },
-    'nav.wishlist':  { ru: 'Вишлист', en: 'Wishlist' },
-    'nav.settings':  { ru: 'Настройки', en: 'Settings' },
-    'add.contact':   { ru: '+ Новый', en: '+ New' }
+    'hub_btn.tip':      { ru: 'К списку приложений', en: 'Back to dashboard' },
+    'nav.main':         { ru: 'Главное',         en: 'Main' },
+    'nav.today':        { ru: 'Сегодня',         en: 'Today' },
+    'nav.contacts':     { ru: 'Контакты',        en: 'Contacts' },
+    'nav.bdays':        { ru: 'Дни рождения',    en: 'Birthdays' },
+    'nav.wishlist':     { ru: 'Вишлист',         en: 'Wishlist' },
+    'nav.my_wishlist':  { ru: 'Мой вишлист',     en: 'My wishlist' },
+    'nav.settings':     { ru: 'Настройки',       en: 'Settings' },
+    'nav.new_contact':  { ru: 'Новый контакт',   en: 'New contact' },
+    'add.contact':      { ru: '+ Новый',         en: '+ New' }
   };
   function init() {
     if (!window.I18N) return;

@@ -128,6 +128,24 @@
   const esc = s => String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+  // ─── Лёгкий markdown → HTML: **bold**, *italic*, `code`, переносы, списки ──
+  function mdRender(text) {
+    let s = esc(text);
+    // **жирный** → <strong>
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    // *курсив* → <em> (только если рядом не звёздочка)
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+    // `code` → <code>
+    s = s.replace(/`([^`\n]+)`/g, '<code style="background:rgba(0,0,0,.25);padding:1px 5px;border-radius:5px;font-size:.92em">$1</code>');
+    // [link](url) → <a>
+    s = s.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">$1</a>');
+    // - пункт списка в начале строки → • пункт
+    s = s.replace(/(^|\n)[-*]\s+/g, '$1• ');
+    // переносы строк
+    s = s.replace(/\n/g, '<br>');
+    return s;
+  }
+
   // ─── DOM ────────────────────────────────────────────────────
   const STYLES = `
     .ai-fab { position: fixed; bottom: 22px; right: 22px; z-index: 90; width: 60px; height: 60px; border-radius: 50%; border: none; background: var(--accent, #10B981); color: var(--accent-text, #fff); font-size: 26px; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.32); transition: transform .2s, box-shadow .2s; display: flex; align-items: center; justify-content: center; }
@@ -505,7 +523,7 @@
       let html = '';
       if (this.state.messages.length === 0) {
         const g = typeof this.cfg.greeting === 'function' ? this.cfg.greeting() : this.cfg.greeting;
-        html += `<div class="ai-msg bot">${esc(g)}</div>`;
+        html += `<div class="ai-msg bot">${mdRender(g)}</div>`;
         const hint = this.state.key
           ? ''
           : `<div class="ai-msg bot" style="opacity:.8"><b>⚙ Нужен API-ключ.</b> Жми шестерёнку наверху — там одной кнопкой получишь Mistral (бесплатно, работает в РБ/РФ).</div>`;
@@ -514,9 +532,11 @@
       this.state.messages.forEach(m => {
         if (m.error) {
           html += `<div class="ai-msg bot error">⚠ ${esc(m.text)}</div>`;
+        } else if (m.role === 'user') {
+          html += `<div class="ai-msg user">${esc(m.text)}</div>`;
         } else {
-          const cls = m.role === 'user' ? 'user' : 'bot';
-          html += `<div class="ai-msg ${cls}">${esc(m.text)}</div>`;
+          // Бот → рендерим лёгкий markdown (**жирный**, *курсив*, списки, ссылки)
+          html += `<div class="ai-msg bot">${mdRender(m.text)}</div>`;
         }
       });
       if (this.state.busy) {
@@ -550,16 +570,20 @@
         const sys = (typeof this.cfg.systemPrompt === 'function') ? this.cfg.systemPrompt() : this.cfg.systemPrompt;
         const ctx = (typeof this.cfg.getContext === 'function') ? this.cfg.getContext() : (this.cfg.getContext || '');
         const fullSystem = sys + (ctx ? `\n\n# КОНТЕКСТ ПРИЛОЖЕНИЯ\n${ctx}` : '');
-        const messages = [
-          { role: 'system', content: fullSystem },
-          ...this.state.messages.slice(-12).map(m => ({ role: m.role, content: m.text }))
-        ];
+        // Только непустые non-error сообщения уходят в API
+        // (иначе Mistral/OpenAI ломаются на "Assistant message must have either content or tool_calls")
+        const history = this.state.messages
+          .filter(m => !m.error && m.text && String(m.text).trim().length > 0)
+          .slice(-12)
+          .map(m => ({ role: m.role, content: String(m.text) }));
+        const messages = [{ role: 'system', content: fullSystem }, ...history];
         const reply = await callAI(this.state.key, messages);
-        if (!reply) throw new Error('Пустой ответ от AI');
-        const processed = this._processActions(reply);
-        this.state.messages.push({ role: 'assistant', text: processed });
+        if (!reply || !String(reply).trim()) throw new Error('Пустой ответ от AI. Попробуй ещё раз или переформулируй вопрос.');
+        const processed = this._processActions(String(reply));
+        const final = (processed && processed.trim()) ? processed : '✅ Готово.';
+        this.state.messages.push({ role: 'assistant', text: final });
       } catch (e) {
-        this.state.messages.push({ role: 'assistant', text: e.message, error: true });
+        this.state.messages.push({ role: 'assistant', text: e.message || String(e), error: true });
       }
       this.state.busy = false;
       this._render();
@@ -569,10 +593,14 @@
     _processActions(text) {
       // Pattern: [[action:NAME|ARG]] — runs cfg.actionRunner(NAME, ARG), strips from text
       if (!this.cfg.actionRunner) return text;
-      return text.replace(/\[\[action:([^\|\]]+)\|?([^\]]*)\]\]/g, (m, name, arg) => {
+      const hasToken = /\[\[action:[^\]]+\]\]/.test(text);
+      const stripped = text.replace(/\[\[action:([^\|\]]+)\|?([^\]]*)\]\]/g, (m, name, arg) => {
         try { this.cfg.actionRunner(name.trim(), (arg || '').trim()); } catch (e) {}
-        return ''; // strip token from visible text
+        return '';
       }).trim();
+      // Если был action-токен но текста рядом нет — отдадим осмысленную реплику
+      if (hasToken && !stripped) return '✅ Открыл нужную запись.';
+      return stripped || text.trim();
     }
   };
 

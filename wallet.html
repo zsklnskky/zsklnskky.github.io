@@ -633,7 +633,7 @@ button { font-family: inherit; }
 /* ── CLOCK widget ── */
 .clock-widget {
   position: fixed;
-  bottom: 28px; right: 32px;
+  bottom: 28px; right: 100px;  /* отступ от AI-FAB чтобы не налезали друг на друга */
   z-index: 99;
   display: flex; flex-direction: column;
   align-items: flex-end;
@@ -1560,12 +1560,12 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
 
     <!-- Period selector -->
     <div class="period-panel">
-      <div class="period-label">📅 Период</div>
+      <div class="period-label" data-i18n="period.label">📅 Период</div>
       <div class="period-tabs" id="period-tabs">
-        <button class="period-tab" data-period="today">Сегодня</button>
-        <button class="period-tab" data-period="week">Неделя</button>
-        <button class="period-tab active" data-period="month">Месяц</button>
-        <button class="period-tab" data-period="year">Год</button>
+        <button class="period-tab" data-period="today" data-i18n="period.today">Сегодня</button>
+        <button class="period-tab" data-period="week" data-i18n="period.week">Неделя</button>
+        <button class="period-tab active" data-period="month" data-i18n="period.month">Месяц</button>
+        <button class="period-tab" data-period="year" data-i18n="period.year">Год</button>
       </div>
     </div>
 
@@ -1574,14 +1574,14 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
 
     <!-- Footer -->
     <div class="sidebar-foot">
-      <a href="index.html" class="hub-back-btn" title="К списку приложений">← Hub</a>
-      <button class="btn btn-accent" data-action="open-add">+ Добавить трату</button>
-      <button class="btn btn-ghost" data-action="open-stats">📊 Статистика и отчёты</button>
-      <button class="btn btn-ghost" data-action="open-converter">💱 Конвертер валют</button>
+      <a href="index.html" class="hub-back-btn" data-i18n-title="hub_btn.tip" title="К списку приложений">← Hub</a>
+      <button class="btn btn-accent" data-action="open-add" data-i18n="add.tx">+ Добавить трату</button>
+      <button class="btn btn-ghost" data-action="open-stats" data-i18n="stats.btn">📊 Статистика и отчёты</button>
+      <button class="btn btn-ghost" data-action="open-converter" data-i18n="conv.btn">💱 Конвертер валют</button>
       <div class="btn-row">
-        <button class="btn btn-ghost" data-action="open-categories" title="Категории">📁</button>
-        <button class="btn btn-ghost" data-action="open-settings" title="Настройки">⚙</button>
-        <button class="btn btn-ghost" data-action="open-help" title="Hotkeys">⌨</button>
+        <button class="btn btn-ghost" data-action="open-categories" data-i18n-title="cat.tip" title="Категории">📁</button>
+        <button class="btn btn-ghost" data-action="open-settings" data-i18n-title="settings.tip" title="Настройки">⚙</button>
+        <button class="btn btn-ghost" data-action="open-help" data-i18n-title="hotkeys.tip" title="Hotkeys">⌨</button>
       </div>
     </div>
   </aside>
@@ -1589,18 +1589,18 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
   <!-- MAIN -->
   <main class="main">
     <div class="main-head">
-      <div class="period-title" id="period-title">Месяц</div>
+      <div class="period-title" id="period-title" data-i18n="period.month">Месяц</div>
       <div class="period-totals">
         <div class="totals-block">
-          <div class="totals-label">↓ Траты</div>
+          <div class="totals-label" data-i18n="totals.expense">↓ Траты</div>
           <div class="totals-val expense" id="totals-expense">0</div>
         </div>
         <div class="totals-block">
-          <div class="totals-label">↑ Доходы</div>
+          <div class="totals-label" data-i18n="totals.income">↑ Доходы</div>
           <div class="totals-val income" id="totals-income">0</div>
         </div>
         <div class="totals-block">
-          <div class="totals-label">= Баланс</div>
+          <div class="totals-label" data-i18n="totals.balance">= Баланс</div>
           <div class="totals-val balance" id="totals-balance">0</div>
         </div>
       </div>
@@ -1611,7 +1611,7 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
     </div>
 
     <div class="main-foot">
-      <span>Данные сохраняются автоматически в браузере</span>
+      <span data-i18n="foot.autosave">Данные сохраняются автоматически в браузере</span>
       <span class="save-badge" id="save-badge">● сохранено</span>
     </div>
   </main>
@@ -3163,10 +3163,15 @@ function startClock() {
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
     const ss = String(now.getSeconds()).padStart(2, '0');
-    const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-    const monthNames = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const isEn = window.I18N && I18N.lang === 'en';
+    const dayNames   = isEn ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+                            : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    const monthNames = isEn ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+                            : ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     document.getElementById('clock-time').textContent = `${hh}:${mm}:${ss}`;
-    document.getElementById('clock-date').textContent = `${dayNames[now.getDay()]}, ${now.getDate()} ${monthNames[now.getMonth()]}`;
+    document.getElementById('clock-date').textContent = isEn
+      ? `${dayNames[now.getDay()]}, ${monthNames[now.getMonth()]} ${now.getDate()}`
+      : `${dayNames[now.getDay()]}, ${now.getDate()} ${monthNames[now.getMonth()]}`;
   }
   tick();
   setInterval(tick, 1000);
@@ -3505,13 +3510,24 @@ ensureRates();  /* fetch live BYN/USD/EUR rates on load (1h cache) + 30min auto-
 (function () {
   const WALLET_DICT = {
     'hub_btn.tip':     { ru: 'К списку приложений', en: 'Back to dashboard' },
-    'add.tx':          { ru: '+ Транзакция', en: '+ Transaction' },
-    'period.day':      { ru: 'День', en: 'Day' },
-    'period.week':     { ru: 'Неделя', en: 'Week' },
-    'period.month':    { ru: 'Месяц', en: 'Month' },
-    'period.year':     { ru: 'Год', en: 'Year' },
-    'period.all':      { ru: 'Всё время', en: 'All time' }
+    'add.tx':          { ru: '+ Добавить трату',  en: '+ Add expense' },
+    'period.label':    { ru: '📅 Период',         en: '📅 Period' },
+    'period.today':    { ru: 'Сегодня',           en: 'Today' },
+    'period.week':     { ru: 'Неделя',            en: 'Week' },
+    'period.month':    { ru: 'Месяц',             en: 'Month' },
+    'period.year':     { ru: 'Год',               en: 'Year' },
+    'period.all':      { ru: 'Всё время',         en: 'All time' },
+    'totals.expense':  { ru: '↓ Траты',           en: '↓ Spent' },
+    'totals.income':   { ru: '↑ Доходы',          en: '↑ Income' },
+    'totals.balance':  { ru: '= Баланс',          en: '= Balance' },
+    'stats.btn':       { ru: '📊 Статистика и отчёты', en: '📊 Stats & reports' },
+    'conv.btn':        { ru: '💱 Конвертер валют',    en: '💱 Currency converter' },
+    'cat.tip':         { ru: 'Категории',          en: 'Categories' },
+    'settings.tip':    { ru: 'Настройки',          en: 'Settings' },
+    'hotkeys.tip':     { ru: 'Горячие клавиши',    en: 'Hotkeys' },
+    'foot.autosave':   { ru: 'Данные сохраняются автоматически в браузере', en: 'Data is saved automatically in your browser' }
   };
+  window.T = (k, fb) => (window.I18N ? I18N.t(k, fb) : (fb || k));
   function init() {
     if (!window.I18N) return;
     I18N.init({

@@ -1340,7 +1340,7 @@ html[data-theme="light"] .date-range input[type="date"]::-webkit-calendar-picker
 /* ── CLOCK widget (bottom-right floating, doesn't overlap header buttons) ── */
 .clock-widget {
   position: fixed;
-  bottom: 28px; right: 32px;
+  bottom: 28px; right: 100px;  /* отступ от AI-FAB чтобы не налезали друг на друга */
   z-index: 99;
   display: flex; flex-direction: column;
   align-items: flex-end;
@@ -2696,7 +2696,7 @@ html[data-theme="dark"] .col-count { background: rgba(255,255,255,.08); }
           <button class="notes-btn clear" id="notes-clear-btn" title="Очистить страницу">🗑</button>
         </div>
       </div>
-      <textarea class="notes-pad" id="notes-pad" placeholder="Идеи, мысли, ссылки..."></textarea>
+      <textarea class="notes-pad" id="notes-pad" data-i18n-ph="notes.ph" placeholder="Идеи, мысли, ссылки..."></textarea>
       <span class="notes-saved" id="notes-saved">✓ сохранено</span>
     </div>
 
@@ -2737,14 +2737,14 @@ html[data-theme="dark"] .col-count { background: rgba(255,255,255,.08); }
     <div class="cols" id="cols">
       <div class="empty-state">
         <div class="empty-icon">◈</div>
-        <h3>Добро пожаловать!</h3>
-        <p>Выбери workspace сверху и создай первый проект. Все задачи, ссылки, теги — в одном месте.</p>
+        <h3 data-i18n="welcome.title">Добро пожаловать!</h3>
+        <p data-i18n="welcome.sub">Выбери workspace сверху и создай первый проект. Все задачи, ссылки, теги — в одном месте.</p>
       </div>
     </div>
 
     <div class="main-foot">
-      <span>Данные сохраняются автоматически в браузере</span>
-      <span class="save-badge" id="save-badge">● сохранено</span>
+      <span data-i18n="foot.autosave">Данные сохраняются автоматически в браузере</span>
+      <span class="save-badge" id="save-badge" data-i18n="foot.saved">● сохранено</span>
     </div>
   </main>
 
@@ -3163,12 +3163,12 @@ function renderQuickStats() {
 
   el.innerHTML = `
     <div class="qs-head">
-      <span class="qs-label">📊 Сегодня</span>
-      <span class="qs-streak" title="Дней подряд с закрытыми задачами">🔥 ${streak}</span>
+      <span class="qs-label">📊 ${T('qs.today','Сегодня')}</span>
+      <span class="qs-streak" title="${T('qs.streak_tip','Дней подряд с закрытыми задачами')}">🔥 ${streak}</span>
     </div>
     <div class="qs-big">
       <div class="qs-big-val">${completedToday}</div>
-      <div class="qs-big-label">${pluralRu(completedToday, ['задача закрыта','задачи закрыто','задач закрыто'])}</div>
+      <div class="qs-big-label">${I18N.lang==='en' ? (completedToday===1?'task done':'tasks done') : pluralRu(completedToday, ['задача закрыта','задачи закрыто','задач закрыто'])}</div>
     </div>
     <div class="qs-mini-chart">
       ${daily.map((b, i) => {
@@ -3178,7 +3178,7 @@ function renderQuickStats() {
       }).join('')}
     </div>
     <div class="qs-bottom">
-      <span>За неделю</span>
+      <span>${T('qs.week','За неделю')}</span>
       <strong>${completedWeek}</strong>
     </div>
   `;
@@ -3330,18 +3330,18 @@ function renderWorkspaceOverview() {
       <div style="flex:1">
         <div class="ws-overview-name">${esc(ws ? ws.name : '')}</div>
         <div class="ws-overview-meta">
-          ${projects.length} ${pluralRu(projects.length, ['проект','проекта','проектов'])} ·
-          ${totalDone}/${totalTasks} задач ·
-          общий прогресс <strong>${totalPct}%</strong>
+          ${projects.length} ${I18N.lang==='en' ? (projects.length===1?'project':'projects') : pluralRu(projects.length, ['проект','проекта','проектов'])} ·
+          ${totalDone}/${totalTasks} ${T('ws.tasks','задач')} ·
+          ${T('ws.overall','общий прогресс')} <strong>${totalPct}%</strong>
         </div>
       </div>
     </div>
-    <div class="ws-overview-section-label">📁 Все проекты</div>
+    <div class="ws-overview-section-label">📁 ${T('ws.all_projects','Все проекты')}</div>
     <div class="ws-overview-grid">
       ${projects.map(projectCardHTML).join('')}
       <button class="proj-card proj-card-add" data-action="add-project">
         <div class="proj-card-icon">+</div>
-        <div class="proj-card-name">Новый проект</div>
+        <div class="proj-card-name">${T('ws.new_project','Новый проект')}</div>
       </button>
     </div>
   </div>`;
@@ -3406,7 +3406,7 @@ function renderCol(status, title, tasks) {
     </div>
     <div class="tasks" data-droptarget="${status}">
       ${tasks.map(taskHTML).join('')}
-      <button class="btn-add-task" data-add="${status}">+ добавить задачу</button>
+      <button class="btn-add-task" data-add="${status}">${T('task.add','+ добавить задачу')}</button>
     </div>
   </div>`;
 }
@@ -5319,10 +5319,14 @@ function startClock() {
     const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(now.getMinutes()).padStart(2, '0');
     const ss = String(now.getSeconds()).padStart(2, '0');
-    const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-    const monthNames = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const isEn = window.I18N && I18N.lang === 'en';
+    const dayNames   = isEn ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+                            : ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+    const monthNames = isEn ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+                            : ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     const dayName = dayNames[now.getDay()];
-    const dateLabel = `${dayName}, ${now.getDate()} ${monthNames[now.getMonth()]}`;
+    const dateLabel = isEn ? `${dayName}, ${monthNames[now.getMonth()]} ${now.getDate()}`
+                           : `${dayName}, ${now.getDate()} ${monthNames[now.getMonth()]}`;
     const t = document.getElementById('clock-time');
     const d = document.getElementById('clock-date');
     if (t) t.textContent = `${hh}:${mm}:${ss}`;
@@ -5539,8 +5543,31 @@ function notesAddPage() {
     'stats.tip':       { ru: 'Статистика и графики', en: 'Stats & charts' },
     'archive.tip':     { ru: 'Архив', en: 'Archive' },
     'settings.tip':    { ru: 'Настройки', en: 'Settings' },
-    'hotkeys.tip':     { ru: 'Горячие клавиши (?)', en: 'Hotkeys (?)' }
+    'hotkeys.tip':     { ru: 'Горячие клавиши (?)', en: 'Hotkeys (?)' },
+    // Sidebar quick-stats widget
+    'qs.today':        { ru: 'Сегодня',            en: 'Today' },
+    'qs.streak_tip':   { ru: 'Дней подряд с закрытыми задачами', en: 'Days in a row with closed tasks' },
+    'qs.tasks_done':   { ru: 'задач закрыто',      en: 'tasks done' },
+    'qs.week':         { ru: 'За неделю',          en: 'This week' },
+    // Notes widget
+    'notes.ph':        { ru: 'Идеи, мысли, ссылки...', en: 'Ideas, thoughts, links...' },
+    // Welcome / empty / footer
+    'welcome.title':   { ru: 'Добро пожаловать!',  en: 'Welcome!' },
+    'welcome.sub':     { ru: 'Выбери workspace сверху и создай первый проект. Все задачи, ссылки, теги — в одном месте.',
+                         en: 'Pick a workspace at the top and create your first project. All tasks, links and tags — in one place.' },
+    'foot.autosave':   { ru: 'Данные сохраняются автоматически в браузере',
+                         en: 'Data is saved automatically in your browser' },
+    'foot.saved':      { ru: '● сохранено',        en: '● saved' },
+    // Workspace overview
+    'ws.tasks':        { ru: 'задач',              en: 'tasks' },
+    'ws.overall':      { ru: 'общий прогресс',     en: 'overall progress' },
+    'ws.all_projects': { ru: 'Все проекты',        en: 'All projects' },
+    'ws.new_project':  { ru: 'Новый проект',       en: 'New project' },
+    // Task UI
+    'task.add':        { ru: '+ добавить задачу',  en: '+ add task' }
   };
+  // Глобальный шорткат для t() в render-функциях
+  window.T = (k, fb) => (window.I18N ? I18N.t(k, fb) : (fb || k));
   function init() {
     if (!window.I18N) return;
     I18N.init({
