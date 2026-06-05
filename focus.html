@@ -11,6 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyClulIxVgenMx1wj3F-s1XWPrNC5AUdn5M",
@@ -2700,15 +2701,15 @@ html[data-theme="dark"] .col-count { background: rgba(255,255,255,.08); }
     </div>
 
     <div class="sidebar-foot">
-      <a href="index.html" class="hub-back-btn" title="К списку приложений">← Hub</a>
-      <button class="btn btn-accent" data-action="open-report">Сгенерировать отчёт</button>
-      <button class="btn btn-ghost" data-action="open-monthly">📅 Месячный отчёт</button>
+      <a href="index.html" class="hub-back-btn" data-i18n-title="hub_btn.tip" title="К списку приложений">← Hub</a>
+      <button class="btn btn-accent" data-action="open-report" data-i18n="report.weekly">Сгенерировать отчёт</button>
+      <button class="btn btn-ghost" data-action="open-monthly" data-i18n="report.monthly">📅 Месячный отчёт</button>
       <div class="btn-row">
-        <button class="btn btn-ghost" data-action="open-search" title="Поиск (⌘K)">🔍</button>
-        <button class="btn btn-ghost" data-action="open-stats" title="Статистика и графики">📊</button>
-        <button class="btn btn-ghost" data-action="open-archive" title="Архив">📦</button>
-        <button class="btn btn-ghost" data-action="open-settings" title="Настройки">⚙</button>
-        <button class="btn btn-ghost" data-action="open-help" title="Hotkeys (?)">⌨</button>
+        <button class="btn btn-ghost" data-action="open-search" data-i18n-title="search.tip" title="Поиск (⌘K)">🔍</button>
+        <button class="btn btn-ghost" data-action="open-stats" data-i18n-title="stats.tip" title="Статистика и графики">📊</button>
+        <button class="btn btn-ghost" data-action="open-archive" data-i18n-title="archive.tip" title="Архив">📦</button>
+        <button class="btn btn-ghost" data-action="open-settings" data-i18n-title="settings.tip" title="Настройки">⚙</button>
+        <button class="btn btn-ghost" data-action="open-help" data-i18n-title="hotkeys.tip" title="Hotkeys (?)">⌨</button>
       </div>
     </div>
   </aside>
@@ -5449,6 +5450,112 @@ function notesAddPage() {
   if (addBtn)   addBtn.addEventListener('click', notesAddPage);
   if (prevBtn)  prevBtn.addEventListener('click', notesPrev);
   if (nextBtn)  nextBtn.addEventListener('click', notesNext);
+})();
+</script>
+
+<!-- ============ AI AGENT ============ -->
+<script src="ai-agent.js"></script>
+<script>
+(function () {
+  function focusContextSnapshot() {
+    try {
+      const ws = state.workspaces?.find(w => w.id === state.activeWs);
+      const allTasks = (state.projects || []).flatMap(p => (p.tasks || []).map(t => ({...t, _proj: p.name})));
+      const plan = allTasks.filter(t => t.status === 'plan');
+      const inprog = allTasks.filter(t => t.status === 'progress');
+      const done = allTasks.filter(t => t.status === 'done');
+      const todayStr = new Date().toISOString().slice(0,10);
+      const todayTasks = allTasks.filter(t => t.dueDate && t.dueDate.slice(0,10) === todayStr);
+      const overdue = allTasks.filter(t => t.dueDate && t.dueDate.slice(0,10) < todayStr && t.status !== 'done');
+      const lines = [];
+      lines.push(`Активное пространство: ${ws?.name || '—'}`);
+      lines.push(`Проектов: ${(state.projects || []).length}`);
+      lines.push(`Задач всего: ${allTasks.length} (план ${plan.length} · в работе ${inprog.length} · готово ${done.length})`);
+      if (todayTasks.length) {
+        lines.push(`\nНА СЕГОДНЯ (${todayTasks.length}):`);
+        todayTasks.slice(0,10).forEach(t => lines.push(`- [${t.status}] ${t.text} (${t._proj})`));
+      }
+      if (overdue.length) {
+        lines.push(`\nПРОСРОЧЕНО (${overdue.length}):`);
+        overdue.slice(0,10).forEach(t => lines.push(`- ${t.text} · просрочено с ${t.dueDate?.slice(0,10)}`));
+      }
+      lines.push(`\nТЕКУЩИЕ ПРОЕКТЫ:`);
+      (state.projects || []).slice(0, 8).forEach(p => {
+        const planN = (p.tasks||[]).filter(t => t.status === 'plan').length;
+        const inpN  = (p.tasks||[]).filter(t => t.status === 'progress').length;
+        const doneN = (p.tasks||[]).filter(t => t.status === 'done').length;
+        lines.push(`- ${p.name}: план ${planN} · в работе ${inpN} · готово ${doneN}`);
+      });
+      const notes = (state.notesPages || []).map(p => p.content).filter(Boolean).join('\n---\n').slice(0, 800);
+      if (notes) lines.push(`\nЗАМЕТКИ (превью):\n${notes}`);
+      return lines.join('\n');
+    } catch (e) { return 'Контекст недоступен: ' + e.message; }
+  }
+
+  function initAgent() {
+    if (!window.AIAgent) return;
+    AIAgent.init({
+      appKey: 'focus',
+      appName: 'FOCUS',
+      title: 'AI · FOCUS',
+      subtitle: 'Помощник по задачам',
+      greeting: () => 'Я твой помощник в FOCUS. Могу: разложить задачи на шаги, подсказать, что взять в работу, помочь с приоритетами, мотивировать. А ещё объясню, что вообще на этой доске. 🚀',
+      suggestions: [
+        { text: '📅 Что у меня сегодня?',            send: 'Что у меня по плану на сегодня? Кратко.' },
+        { text: '⚡ Что взять в работу сейчас?',      send: 'Посмотри на мои задачи и подскажи 1-3 штуки, которые стоит взять прямо сейчас. Объясни почему.' },
+        { text: '🧹 Разложи эту неделю',             send: 'Помоги мне разложить задачи на эту неделю — что в первую очередь, что отложить, что делегировать.' },
+        { text: '💡 Объясни что это за приложение',   send: 'Объясни простым языком, что это за приложение FOCUS и как им лучше пользоваться.' }
+      ],
+      systemPrompt: () => 'Ты — встроенный AI-помощник в приложении FOCUS (трекер задач: канбан Plan/Progress/Done, проекты, заметки, отчёты). Отвечай кратко, по-русски, действенно. Если просят разложить задачи — давай конкретные шаги. Если спрашивают что взять в работу — анализируй текущий список и аргументируй. Мотивируй без банальностей. Используй эмодзи умеренно, со вкусом.',
+      getContext: focusContextSnapshot,
+      getDb: () => db,
+      getUser: () => currentUser
+    });
+  }
+
+  function tryInit() {
+    if (window.AIAgent) initAgent();
+    else setTimeout(tryInit, 100);
+  }
+  tryInit();
+
+  // Перезагрузить ключ при логине/логауте
+  if (typeof auth !== 'undefined' && auth && auth.onAuthStateChanged) {
+    auth.onAuthStateChanged(() => {
+      if (window.AIAgent && AIAgent.cfg) AIAgent.refresh();
+    });
+  }
+})();
+</script>
+
+<!-- ============ I18N ============ -->
+<script>
+(function () {
+  const FOCUS_DICT = {
+    'hub_btn.tip':     { ru: 'К списку приложений', en: 'Back to dashboard' },
+    'report.weekly':   { ru: 'Сгенерировать отчёт', en: 'Generate report' },
+    'report.monthly':  { ru: '📅 Месячный отчёт', en: '📅 Monthly report' },
+    'search.tip':      { ru: 'Поиск (⌘K)', en: 'Search (⌘K)' },
+    'stats.tip':       { ru: 'Статистика и графики', en: 'Stats & charts' },
+    'archive.tip':     { ru: 'Архив', en: 'Archive' },
+    'settings.tip':    { ru: 'Настройки', en: 'Settings' },
+    'hotkeys.tip':     { ru: 'Горячие клавиши (?)', en: 'Hotkeys (?)' }
+  };
+  function init() {
+    if (!window.I18N) return;
+    I18N.init({
+      dict: FOCUS_DICT,
+      mountTarget: '.sidebar-foot',
+      getDb: () => db,
+      getUser: () => currentUser,
+      onChange: () => { try { render(); } catch(e){} }
+    });
+  }
+  if (window.I18N) init();
+  else setTimeout(init, 50);
+  if (typeof auth !== 'undefined' && auth?.onAuthStateChanged) {
+    auth.onAuthStateChanged(() => { if (window.I18N) I18N.refresh(); });
+  }
 })();
 </script>
 

@@ -11,6 +11,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyClulIxVgenMx1wj3F-s1XWPrNC5AUdn5M",
@@ -3397,5 +3398,136 @@ renderAuthUI();
 startClock();
 ensureRates();  /* fetch live BYN/USD/EUR rates on load (1h cache) + 30min auto-refresh */
 </script>
+
+<!-- ============ AI AGENT ============ -->
+<script src="ai-agent.js"></script>
+<script>
+(function () {
+  function walletContextSnapshot() {
+    try {
+      const cur = state.currency || 'BYN';
+      const txs = (state.transactions || []).slice();
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthTxs = txs.filter(t => new Date(t.date) >= monthStart);
+
+      function convert(amount, from) {
+        if (!state.rates || !state.rates.data) return amount;
+        if (from === cur) return amount;
+        const r = state.rates.data[from]?.[cur];
+        return r ? amount * r : amount;
+      }
+
+      let monthIncome = 0, monthExpense = 0;
+      const byCat = {};
+      monthTxs.forEach(t => {
+        const v = convert(t.amount, t.currency || cur);
+        if (t.type === 'income') monthIncome += v;
+        else {
+          monthExpense += v;
+          const cat = (state.categories || []).find(c => c.id === t.categoryId);
+          const name = cat ? `${cat.icon || '•'} ${cat.name}` : 'Без категории';
+          byCat[name] = (byCat[name] || 0) + v;
+        }
+      });
+      const balance = monthIncome - monthExpense;
+      const top = Object.entries(byCat).sort((a,b) => b[1]-a[1]).slice(0, 10);
+
+      const recent = txs.slice().sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
+
+      const lines = [];
+      const monthName = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'][now.getMonth()];
+      lines.push(`Валюта отображения: ${cur}`);
+      lines.push(`Текущий месяц (${monthName} ${now.getFullYear()}):`);
+      lines.push(`- Доход: ${monthIncome.toFixed(2)} ${cur}`);
+      lines.push(`- Расход: ${monthExpense.toFixed(2)} ${cur}`);
+      lines.push(`- Остаток: ${balance.toFixed(2)} ${cur}`);
+      lines.push(`- Транзакций за месяц: ${monthTxs.length}`);
+
+      if (top.length) {
+        lines.push(`\nТОП КАТЕГОРИЙ РАСХОДОВ:`);
+        top.forEach(([name, v]) => lines.push(`- ${name}: ${v.toFixed(2)} ${cur}`));
+      }
+
+      if (recent.length) {
+        lines.push(`\nПОСЛЕДНИЕ ТРАНЗАКЦИИ:`);
+        recent.forEach(t => {
+          const cat = (state.categories || []).find(c => c.id === t.categoryId);
+          const sign = t.type === 'income' ? '+' : '-';
+          lines.push(`- ${t.date?.slice(0,10) || ''} · ${sign}${t.amount} ${t.currency || cur} · ${cat?.name || ''}${t.note ? ' · ' + t.note : ''}`);
+        });
+      }
+
+      if (state.rates?.data?.USD?.BYN) {
+        lines.push(`\nТЕКУЩИЕ КУРСЫ к BYN: USD=${state.rates.data.USD.BYN.toFixed(3)} · EUR=${state.rates.data.EUR.BYN.toFixed(3)}`);
+      }
+      return lines.join('\n');
+    } catch (e) { return 'Контекст недоступен: ' + e.message; }
+  }
+
+  function initAgent() {
+    if (!window.AIAgent) return;
+    AIAgent.init({
+      appKey: 'wallet',
+      appName: 'WALLET',
+      title: 'AI · WALLET',
+      subtitle: 'Помощник по финансам',
+      greeting: () => 'Я — твой финансовый помощник. Могу: разобрать расходы за месяц, подсказать где сэкономить, объяснить статистику, помочь принять решение по покупке. 💸',
+      suggestions: [
+        { text: '📊 Куда уходят деньги?',      send: 'Разбери мои расходы за этот месяц — на что трачу больше всего и почему.' },
+        { text: '✂️ Где можно сэкономить?',     send: 'Посмотри на мои расходы и подскажи 2-3 категории, где реально можно урезать. С обоснованием.' },
+        { text: '📈 Сделай вывод по месяцу',   send: 'Сделай короткий отчёт по этому месяцу — что хорошо, что плохо, что изменить в следующем.' },
+        { text: '💡 Объясни что это за приложение', send: 'Объясни простым языком, что это за WALLET и что в нём можно делать.' }
+      ],
+      systemPrompt: () => 'Ты — встроенный AI-помощник в приложении WALLET (учёт личных финансов в BYN/USD/EUR). Анализируй транзакции, давай чёткие советы по экономии, объясняй цифры. Отвечай по-русски, кратко и по делу. Не давай абстрактных советов вроде «откладывайте 10%», говори конкретно на основе данных. Эмодзи умеренно.',
+      getContext: walletContextSnapshot,
+      getDb: () => db,
+      getUser: () => currentUser
+    });
+  }
+
+  function tryInit() {
+    if (window.AIAgent) initAgent();
+    else setTimeout(tryInit, 100);
+  }
+  tryInit();
+
+  if (typeof auth !== 'undefined' && auth && auth.onAuthStateChanged) {
+    auth.onAuthStateChanged(() => {
+      if (window.AIAgent && AIAgent.cfg) AIAgent.refresh();
+    });
+  }
+})();
+</script>
+
+<!-- ============ I18N ============ -->
+<script>
+(function () {
+  const WALLET_DICT = {
+    'hub_btn.tip':     { ru: 'К списку приложений', en: 'Back to dashboard' },
+    'add.tx':          { ru: '+ Транзакция', en: '+ Transaction' },
+    'period.day':      { ru: 'День', en: 'Day' },
+    'period.week':     { ru: 'Неделя', en: 'Week' },
+    'period.month':    { ru: 'Месяц', en: 'Month' },
+    'period.year':     { ru: 'Год', en: 'Year' },
+    'period.all':      { ru: 'Всё время', en: 'All time' }
+  };
+  function init() {
+    if (!window.I18N) return;
+    I18N.init({
+      dict: WALLET_DICT,
+      mountTarget: '.sidebar-foot',
+      getDb: () => db,
+      getUser: () => currentUser,
+      onChange: () => { try { render(); } catch(e){} }
+    });
+  }
+  if (window.I18N) init(); else setTimeout(init, 50);
+  if (typeof auth !== 'undefined' && auth?.onAuthStateChanged) {
+    auth.onAuthStateChanged(() => { if (window.I18N) I18N.refresh(); });
+  }
+})();
+</script>
+
 </body>
 </html>

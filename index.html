@@ -29,6 +29,8 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyClulIxVgenMx1wj3F-s1XWPrNC5AUdn5M",
@@ -411,6 +413,32 @@ html[data-theme="light"] .soon-badge { color: #6D28D9; background: rgba(167,139,
 
 const THEME_KEY = 'hub_theme';
 
+/* ===== I18N DICTIONARY ===== */
+const HUB_DICT = {
+  'hub.tagline':        { ru: 'Личный дашборд', en: 'Personal dashboard' },
+  'hub.welcome':        { ru: 'Войди через Google — твои задачи, заметки и финансы будут синхронизироваться между всеми устройствами автоматически.', en: 'Sign in with Google — your tasks, notes and finances will sync across all your devices automatically.' },
+  'hub.signin':         { ru: 'Войти через Google', en: 'Sign in with Google' },
+  'hub.signout':        { ru: '🚪 Выйти', en: '🚪 Sign out' },
+  'hub.signout_confirm':{ ru: 'Выйти из аккаунта?', en: 'Sign out from your account?' },
+  'hub.hi':             { ru: 'Привет', en: 'Hi' },
+  'hub.theme.tip':      { ru: 'Сменить тему', en: 'Toggle theme' },
+  'hub.status.connecting':{ ru: 'подключение...', en: 'connecting...' },
+  'hub.status.in_as':   { ru: 'вошёл как', en: 'signed in as' },
+  'hub.status.not_in':  { ru: 'не вошёл', en: 'not signed in' },
+  'hub.fb_fail':        { ru: 'Firebase не загрузился. Проверь интернет и обнови страницу.', en: 'Firebase did not load. Check your connection and refresh.' },
+  'hub.signin_fail':    { ru: 'Не удалось войти: ', en: 'Sign-in failed: ' },
+
+  'app.focus.desc':     { ru: 'Задачи · проекты · заметки · отчёты', en: 'Tasks · projects · notes · reports' },
+  'app.focus.desc_lock':{ ru: 'Задачи · проекты · заметки',          en: 'Tasks · projects · notes' },
+  'app.wallet.desc':    { ru: 'Транзакции · бюджет · валюты',        en: 'Transactions · budget · currencies' },
+  'app.wallet.desc_lock':{ ru: 'Транзакции · бюджет',                en: 'Transactions · budget' },
+  'app.password.desc':  { ru: 'Менеджер паролей · zero-knowledge',   en: 'Password manager · zero-knowledge' },
+  'app.password.desc_lock':{ ru: 'Менеджер паролей',                 en: 'Password manager' },
+  'app.orbit.desc':     { ru: 'Близкие люди · дни рождения · ИИ-поздравления', en: 'People · birthdays · AI greetings' },
+  'app.orbit.desc_lock':{ ru: 'Близкие люди · напоминания',          en: 'People · reminders' }
+};
+const T = (k, fb) => (window.I18N ? I18N.t(k, fb) : fb || k);
+
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || 'dark';
   document.documentElement.setAttribute('data-theme', saved);
@@ -445,120 +473,101 @@ function setStatus(text, kind) {
 }
 
 function appCards(loggedIn) {
-  const focusCard = loggedIn
-    ? `<a href="focus.html" class="hub-app focus">
-         <img class="app-icon-img" src="focus-icon.png" alt="">
-         <div class="app-name">FOCUS.</div>
-         <div class="app-desc">Задачи · проекты · заметки · отчёты</div>
+  function card(slug, name, descKey, lockDescKey) {
+    if (loggedIn) {
+      return `<a href="${slug}.html" class="hub-app ${slug}">
+         <img class="app-icon-img" src="${slug}-icon.png" alt="">
+         <div class="app-name">${name}.</div>
+         <div class="app-desc">${esc(T(descKey))}</div>
          <div class="app-arrow">→</div>
-       </a>`
-    : `<div class="hub-app focus locked">
-         <img class="app-icon-img" src="focus-icon.png" alt="">
-         <div class="app-name">FOCUS.</div>
-         <div class="app-desc">Задачи · проекты · заметки</div>
+       </a>`;
+    }
+    return `<div class="hub-app ${slug} locked">
+         <img class="app-icon-img" src="${slug}-icon.png" alt="">
+         <div class="app-name">${name}.</div>
+         <div class="app-desc">${esc(T(lockDescKey))}</div>
          <div class="app-lock">🔒</div>
        </div>`;
-
-  const walletCard = loggedIn
-    ? `<a href="wallet.html" class="hub-app wallet">
-         <img class="app-icon-img" src="wallet-icon.png" alt="">
-         <div class="app-name">WALLET.</div>
-         <div class="app-desc">Транзакции · бюджет · валюты</div>
-         <div class="app-arrow">→</div>
-       </a>`
-    : `<div class="hub-app wallet locked">
-         <img class="app-icon-img" src="wallet-icon.png" alt="">
-         <div class="app-name">WALLET.</div>
-         <div class="app-desc">Транзакции · бюджет</div>
-         <div class="app-lock">🔒</div>
-       </div>`;
-
-  const passwordCard = loggedIn
-    ? `<a href="password.html" class="hub-app password">
-         <img class="app-icon-img" src="password-icon.png" alt="">
-         <div class="app-name">PASSWORD.</div>
-         <div class="app-desc">Менеджер паролей · zero-knowledge</div>
-         <div class="app-arrow">→</div>
-       </a>`
-    : `<div class="hub-app password locked">
-         <img class="app-icon-img" src="password-icon.png" alt="">
-         <div class="app-name">PASSWORD.</div>
-         <div class="app-desc">Менеджер паролей</div>
-         <div class="app-lock">🔒</div>
-       </div>`;
-
-  const orbitCard = loggedIn
-    ? `<a href="orbit.html" class="hub-app orbit">
-         <img class="app-icon-img" src="orbit-icon.png" alt="">
-         <div class="app-name">ORBIT.</div>
-         <div class="app-desc">Близкие люди · дни рождения · ИИ-поздравления</div>
-         <div class="app-arrow">→</div>
-       </a>`
-    : `<div class="hub-app orbit locked">
-         <img class="app-icon-img" src="orbit-icon.png" alt="">
-         <div class="app-name">ORBIT.</div>
-         <div class="app-desc">Близкие люди · напоминания</div>
-         <div class="app-lock">🔒</div>
-       </div>`;
-
-  return focusCard + walletCard + passwordCard + orbitCard;
+  }
+  return card('focus',    'FOCUS',    'app.focus.desc',    'app.focus.desc_lock')
+       + card('wallet',   'WALLET',   'app.wallet.desc',   'app.wallet.desc_lock')
+       + card('password', 'PASSWORD', 'app.password.desc', 'app.password.desc_lock')
+       + card('orbit',    'ORBIT',    'app.orbit.desc',    'app.orbit.desc_lock');
 }
 
+let _currentUser = null;
+
 function render(user) {
+  if (user !== undefined) _currentUser = user;
+  const u = _currentUser;
   const root = document.getElementById('hub-auth');
 
-  if (user) {
-    setStatus('вошёл как ' + (user.email || '?'), 'online');
-    const initials = (user.displayName || user.email || 'U')
+  document.getElementById('theme-btn').setAttribute('title', T('hub.theme.tip'));
+  document.getElementById('hub-tagline').textContent = T('hub.tagline');
+
+  if (u) {
+    setStatus(T('hub.status.in_as') + ' ' + (u.email || '?'), 'online');
+    const initials = (u.displayName || u.email || 'U')
       .split(/\s+/).map(s => s[0] || '').join('').slice(0,2).toUpperCase();
-    const firstName = (user.displayName || '').split(/\s+/)[0] || 'друг';
-    // Dashboard title = person's name pulled from their account
-    const brandName = (user.displayName ? user.displayName.split(/\s+/)[0] : (user.email || '').split('@')[0]) || 'DASHBOARD';
+    const firstName = (u.displayName || '').split(/\s+/)[0] || (T('hub.hi') === 'Hi' ? 'friend' : 'друг');
+    const brandName = (u.displayName ? u.displayName.split(/\s+/)[0] : (u.email || '').split('@')[0]) || 'DASHBOARD';
     document.getElementById('brand-name').textContent = brandName.toUpperCase();
-    document.getElementById('hub-tagline').textContent = 'Личный дашборд';
     root.innerHTML = `
       <div class="user-row">
-        <div class="user-avatar" ${user.photoURL ? `style="background-image:url('${esc(user.photoURL)}')"` : ''}>
-          ${user.photoURL ? '' : esc(initials)}
+        <div class="user-avatar" ${u.photoURL ? `style="background-image:url('${esc(u.photoURL)}')"` : ''}>
+          ${u.photoURL ? '' : esc(initials)}
         </div>
         <div class="user-info">
-          <div class="user-name">Привет, ${esc(firstName)}!</div>
-          <div class="user-email">${esc(user.email || '')}</div>
+          <div class="user-name">${esc(T('hub.hi'))}, ${esc(firstName)}!</div>
+          <div class="user-email">${esc(u.email || '')}</div>
         </div>
       </div>
       <div class="hub-apps">${appCards(true)}</div>
-      <button class="signout-btn" id="signout-btn">🚪 Выйти</button>
+      <button class="signout-btn" id="signout-btn">${esc(T('hub.signout'))}</button>
     `;
     document.getElementById('signout-btn').addEventListener('click', () => {
-      if (confirm('Выйти из аккаунта?')) auth.signOut();
+      if (confirm(T('hub.signout_confirm'))) auth.signOut();
     });
   } else {
-    setStatus('не вошёл', 'offline');
+    setStatus(T('hub.status.not_in'), 'offline');
     document.getElementById('brand-name').textContent = 'DASHBOARD';
-    document.getElementById('hub-tagline').textContent = 'Личный дашборд';
     root.innerHTML = `
-      <div class="hub-welcome">
-        Войди через Google — твои задачи, заметки и финансы будут синхронизироваться между всеми устройствами автоматически.
-      </div>
+      <div class="hub-welcome">${esc(T('hub.welcome'))}</div>
       <button class="google-signin" id="signin-btn">
         <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
-        Войти через Google
+        ${esc(T('hub.signin'))}
       </button>
       <div class="hub-apps">${appCards(false)}</div>
     `;
     document.getElementById('signin-btn').addEventListener('click', () => {
-      if (!auth) { alert('Firebase не загрузился. Проверь интернет и обнови страницу.'); return; }
+      if (!auth) { alert(T('hub.fb_fail')); return; }
       auth.signInWithPopup(googleProvider).catch(err => {
         if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-          alert('Не удалось войти: ' + (err.message || err.code));
+          alert(T('hub.signin_fail') + (err.message || err.code));
         }
       });
     });
   }
 }
 
+// init i18n + initial status BEFORE auth callback fires
+if (window.I18N) {
+  I18N.init({
+    dict: HUB_DICT,
+    onChange: () => render()
+  });
+}
+setStatus(T('hub.status.connecting'));
+
 if (auth) {
-  auth.onAuthStateChanged(render);
+  auth.onAuthStateChanged(user => {
+    render(user);
+    if (user && window.I18N) {
+      I18N.getDb = () => firebase.firestore ? firebase.firestore() : null;
+      I18N.getUser = () => user;
+      I18N.refresh();
+    }
+  });
 } else {
   render(null);
 }

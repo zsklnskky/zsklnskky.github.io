@@ -14,6 +14,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="i18n.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyClulIxVgenMx1wj3F-s1XWPrNC5AUdn5M",
@@ -440,9 +441,11 @@ html { scroll-behavior: smooth; }
   letter-spacing: .04em;
   display: inline-flex; align-items: center; gap: 8px;
   box-shadow: 0 8px 22px var(--accent-shadow);
-  transition: transform .12s var(--easing);
+  transition: filter .15s var(--easing), box-shadow .18s var(--easing);
 }
-.btn-primary:hover { transform: translateY(-2px); }
+/* Стабильный hover: без transform — кнопка не сдвигается из-под курсора, не дёргается */
+.btn-primary:hover  { filter: brightness(1.08); box-shadow: 0 12px 30px var(--accent-shadow); }
+.btn-primary:active { filter: brightness(.96); }
 
 /* ── BIRTHDAY HERO ── */
 .bday-hero {
@@ -2201,6 +2204,78 @@ function formatFullDate(ts) {
 }
 
 /* ============================================================
+   FX RATES — для вишлиста (BYN / USD / EUR / RUB), кэш в localStorage 1ч
+   ============================================================ */
+const FX_CACHE_KEY = 'orbit_fx_rates_v2';
+// Только белорусский рубль, доллар, евро (как в WALLET). Российский ₽ не используем.
+const FX_CURRENCIES = ['BYN', 'USD', 'EUR'];
+const FX_SYMBOL = { BYN: 'Br', USD: '$', EUR: '€' };
+let orbitRates = null;
+
+(function loadCachedRates() {
+  try {
+    const raw = localStorage.getItem(FX_CACHE_KEY);
+    if (raw) {
+      const c = JSON.parse(raw);
+      if (c && c.data && (Date.now() - (c.fetchedAt || 0) < 24*3600*1000)) {
+        orbitRates = c;
+      }
+    }
+  } catch (e) {}
+})();
+
+async function fetchOrbitRates(force) {
+  if (!force && orbitRates && (Date.now() - orbitRates.fetchedAt) < 60*60*1000) return true;
+  const sources = [
+    'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/byn.json',
+    'https://latest.currency-api.pages.dev/v1/currencies/byn.json'
+  ];
+  for (const url of sources) {
+    try {
+      const r = await fetch(url).then(x => x.json());
+      const b = r.byn;
+      if (!b || !b.usd || !b.eur) continue;
+      const m = {
+        BYN: { BYN: 1,         USD: b.usd,        EUR: b.eur },
+        USD: { BYN: 1/b.usd,   USD: 1,            EUR: b.eur/b.usd },
+        EUR: { BYN: 1/b.eur,   USD: b.usd/b.eur,  EUR: 1 }
+      };
+      orbitRates = { data: m, fetchedAt: Date.now(), date: r.date };
+      try { localStorage.setItem(FX_CACHE_KEY, JSON.stringify(orbitRates)); } catch (e) {}
+      return true;
+    } catch (e) { /* try next */ }
+  }
+  return false;
+}
+
+function fxConvert(amount, from, to) {
+  if (from === to) return amount;
+  if (!orbitRates || !orbitRates.data || !orbitRates.data[from]) return amount;
+  const r = orbitRates.data[from][to];
+  return r ? amount * r : amount;
+}
+
+function fmtFxAmount(amount, currency) {
+  const n = +amount;
+  if (!Number.isFinite(n)) return '—';
+  let s;
+  if (n >= 1000)      s = n.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
+  else if (n >= 100)  s = n.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
+  else if (n >= 10)   s = n.toLocaleString('ru-RU', { maximumFractionDigits: 1 });
+  else                s = n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+  return `${s} ${FX_SYMBOL[currency] || currency}`;
+}
+
+function fmtMultiCurrency(amount, baseCurrency) {
+  if (!amount || !baseCurrency) return '';
+  const others = FX_CURRENCIES.filter(c => c !== baseCurrency)
+    .map(c => fmtFxAmount(fxConvert(amount, baseCurrency, c), c));
+  const main = fmtFxAmount(amount, baseCurrency);
+  if (!orbitRates) return main; // no rates loaded
+  return `${main} <span style="opacity:.62">≈ ${others.join(' · ')}</span>`;
+}
+
+/* ============================================================
    FIREBASE
    ============================================================ */
 const fb = { auth: null, db: null, googleProvider: null };
@@ -2225,12 +2300,11 @@ if (fb.auth) {
   fb.auth.onAuthStateChanged(async user => {
     currentUser = user;
     if (!user) {
-      document.getElementById('auth-overlay').style.display = 'flex';
-      document.getElementById('shell').style.display = 'none';
+      // Не показываем попап входа — отправляем пользователя на HUB
+      window.location.replace('index.html');
       return;
     }
     await loadData();
-    document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('shell').style.display = 'flex';
     subscribeRemote();
     enterApp();
@@ -2249,6 +2323,31 @@ async function loadData() {
     console.error('Load failed', e);
     toast('Не удалось загрузить данные', 'error');
   }
+  // Подтянуть общий AI-ключ (settings/{uid}) — приоритет над state.settings.geminiApiKey
+  try {
+    const sd = await fb.db.collection('settings').doc(currentUser.uid).get();
+    const shared = sd.exists ? (sd.data().aiKey || '') : '';
+    if (shared) {
+      state.settings.geminiApiKey = shared;
+    } else if (state.settings.geminiApiKey) {
+      // Heal: первый раз приходим — копируем легаси-ключ из ORBIT в общую коллекцию
+      await fb.db.collection('settings').doc(currentUser.uid).set(
+        { aiKey: state.settings.geminiApiKey, updatedAt: Date.now() },
+        { merge: true }
+      );
+    }
+  } catch (e) { console.warn('shared ai-key load', e); }
+}
+
+// Сохраняет AI-ключ в общую коллекцию settings/{uid} (всем 4 аппам сразу)
+async function saveSharedAIKey(key) {
+  if (!currentUser || !fb?.db) return;
+  try {
+    await fb.db.collection('settings').doc(currentUser.uid).set(
+      { aiKey: (key || '').trim(), updatedAt: Date.now() },
+      { merge: true }
+    );
+  } catch (e) { console.warn('shared ai-key save', e); }
 }
 
 function queueSave() {
@@ -3297,13 +3396,15 @@ function renderSettings() {
     </div>
   `;
 
-  document.getElementById('set-key-btn').onclick = () => {
-    const v = prompt('Вставь Gemini API key:', state.settings.geminiApiKey || '');
-    if (v == null) return;
+  document.getElementById('set-key-btn').onclick = async () => {
+    // НЕ пре-заполняем существующим ключом — никто не увидит его при подсматривании
+    const v = prompt('Вставь новый AI API key (Mistral / Groq / Gemini / DeepSeek / OpenRouter). Оставь пустым чтобы отменить:', '');
+    if (v == null || !v.trim()) return;
     state.settings.geminiApiKey = v.trim();
     queueSave();
+    await saveSharedAIKey(v.trim()); // общий ключ для всех 4 аппов
     renderSettings();
-    toast('Ключ сохранён', 'success');
+    toast('Ключ сохранён (работает во всех 4 аппах)', 'success');
   };
   const tk = document.getElementById('test-key-btn');
   if (tk) tk.onclick = async () => {
@@ -3317,11 +3418,12 @@ function renderSettings() {
     tk.disabled = false;
   };
   const ck = document.getElementById('clear-key-btn');
-  if (ck) ck.onclick = () => {
+  if (ck) ck.onclick = async () => {
     state.settings.geminiApiKey = '';
     queueSave();
+    await saveSharedAIKey('');
     renderSettings();
-    toast('Ключ удалён', 'success');
+    toast('Ключ удалён (во всех 4 аппах)', 'success');
   };
   const ne = document.getElementById('enable-notif-btn');
   if (ne) ne.onclick = async () => {
@@ -3647,6 +3749,9 @@ function render() {
 }
 
 function enterApp() {
+  // Подтянуть курсы валют для вишлиста в фоне (не блокируя render)
+  fetchOrbitRates().then(ok => { if (ok && currentView.startsWith('wishlist')) render(); });
+
   // Check URL for ?wishlist=ID — visitor mode
   const url = new URL(location.href);
   const wishParam = url.searchParams.get('wishlist');
@@ -3736,7 +3841,9 @@ function renderWishlist() {
               </div>
               ${item.description ? `<div class="wish-item-desc">${esc(item.description)}</div>` : ''}
               <div class="wish-item-meta">
-                ${item.priceApprox ? `<span class="pill price">${esc(item.priceApprox)}</span>` : ''}
+                ${(item.priceAmount && item.priceCurrency)
+                  ? `<span class="pill price">${fmtMultiCurrency(item.priceAmount, item.priceCurrency)}</span>`
+                  : (item.priceApprox ? `<span class="pill price">${esc(item.priceApprox)}</span>` : '')}
                 <span class="pill">приоритет ${item.priority || 3}/5</span>
                 ${item.url ? `<span class="pill">🔗 ссылка есть</span>` : ''}
               </div>
@@ -3846,7 +3953,13 @@ function openWishEditModal(id) {
   ensureWishlist();
   editingWishId = id;
   const item = id ? state.wishlist.items.find(i => i.id === id) : null;
-  const e = item || { id: uuid(), title: '', description: '', url: '', priceApprox: '', priority: 3, createdAt: Date.now() };
+  const e = item || { id: uuid(), title: '', description: '', url: '', priceAmount: '', priceCurrency: 'BYN', priority: 3, createdAt: Date.now() };
+  // Backward compat: пробуем выделить число из старого priceApprox
+  if (e.priceAmount === '' && e.priceApprox) {
+    const m = String(e.priceApprox).match(/(\d[\d\s ,.]*)/);
+    if (m) e.priceAmount = m[1].replace(/[\s ]/g, '').replace(',', '.');
+  }
+  const baseCur = e.priceCurrency || 'BYN';
 
   document.getElementById('edit-modal-title').textContent = id ? 'Редактировать пункт' : 'Новый пункт вишлиста';
   document.getElementById('edit-modal-body').innerHTML = `
@@ -3863,11 +3976,17 @@ function openWishEditModal(id) {
       <textarea class="field-textarea" id="w-desc" rows="3" placeholder="Какой цвет / размер / вариант / зачем нужно...">${esc(e.description)}</textarea>
     </div>
     <div class="field-row">
-      <div class="field">
+      <div class="field" style="flex:1.4">
         <label class="field-label">Примерная цена</label>
-        <input class="field-input" id="w-price" value="${esc(e.priceApprox)}" placeholder="120000 ₽ / $50">
+        <div style="display:flex;gap:8px">
+          <input class="field-input" id="w-price-amount" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(e.priceAmount)}" placeholder="120" style="flex:1">
+          <select class="field-select" id="w-price-cur" style="flex:0 0 96px">
+            ${FX_CURRENCIES.map(c => `<option value="${c}" ${c===baseCur?'selected':''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div id="w-price-preview" style="margin-top:8px;font-size:12px;color:var(--text2);line-height:1.55;min-height:18px"></div>
       </div>
-      <div class="field">
+      <div class="field" style="flex:1">
         <label class="field-label">Приоритет (1=хочу сильно)</label>
         <select class="field-select" id="w-prio">
           <option value="1" ${e.priority===1?'selected':''}>1 — топ-приоритет</option>
@@ -3879,9 +3998,27 @@ function openWishEditModal(id) {
       </div>
     </div>
     <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:6px">
-      💡 Внутренние ссылки маркетплейсов — сразу с твоим выбором (цвет, размер). Так друзья не ошибутся.
+      💡 Введи сумму в любой валюте — друзьям покажется во всех (BYN / USD / EUR / RUB) по живому курсу. Так не запутаются.
     </div>
   `;
+
+  function updatePricePreview() {
+    const a = parseFloat(document.getElementById('w-price-amount').value);
+    const c = document.getElementById('w-price-cur').value;
+    const pv = document.getElementById('w-price-preview');
+    if (!a || !Number.isFinite(a)) { pv.innerHTML = ''; return; }
+    if (!orbitRates) { pv.innerHTML = '<span style="opacity:.6">…подгружаю курсы…</span>'; return; }
+    const others = FX_CURRENCIES.filter(x => x !== c)
+      .map(x => fmtFxAmount(fxConvert(a, c, x), x))
+      .join(' · ');
+    pv.innerHTML = `≈ ${others}`;
+  }
+  document.getElementById('w-price-amount').addEventListener('input', updatePricePreview);
+  document.getElementById('w-price-cur').addEventListener('change', updatePricePreview);
+  // Подгрузить курсы и обновить превью
+  fetchOrbitRates().then(updatePricePreview);
+  updatePricePreview();
+
   document.getElementById('edit-save-btn').onclick = saveWishEdit;
   document.getElementById('modal-edit').classList.add('open');
 }
@@ -3890,12 +4027,17 @@ function saveWishEdit() {
   ensureWishlist();
   const title = document.getElementById('w-title').value.trim();
   if (!title) { toast('Название обязательно', 'error'); return; }
+  const amountRaw = document.getElementById('w-price-amount').value.trim();
+  const priceAmount = amountRaw ? parseFloat(amountRaw) : null;
+  const priceCurrency = document.getElementById('w-price-cur').value || 'BYN';
   const item = {
     id: editingWishId || uuid(),
     title,
     url: document.getElementById('w-url').value.trim(),
     description: document.getElementById('w-desc').value.trim(),
-    priceApprox: document.getElementById('w-price').value.trim(),
+    priceAmount: (priceAmount && Number.isFinite(priceAmount)) ? priceAmount : null,
+    priceCurrency: priceAmount ? priceCurrency : null,
+    priceApprox: (priceAmount && Number.isFinite(priceAmount)) ? `${priceAmount} ${priceCurrency}` : '', // легаси-поле для старых клиентов
     priority: parseInt(document.getElementById('w-prio').value) || 3,
     updatedAt: Date.now()
   };
@@ -4010,7 +4152,9 @@ function renderVisitorContent() {
                 </div>
                 ${item.description ? `<div class="wish-item-desc">${esc(item.description)}</div>` : ''}
                 <div class="wish-item-meta">
-                  ${item.priceApprox ? `<span class="pill price">${esc(item.priceApprox)}</span>` : ''}
+                  ${(item.priceAmount && item.priceCurrency)
+                    ? `<span class="pill price">${fmtMultiCurrency(item.priceAmount, item.priceCurrency)}</span>`
+                    : (item.priceApprox ? `<span class="pill price">${esc(item.priceApprox)}</span>` : '')}
                   <span class="pill">приоритет ${item.priority || 3}/5</span>
                 </div>
 
@@ -4084,30 +4228,142 @@ async function cancelReservation(itemId) {
 /* ============================================================
    AI CHAT — 5 questions then generates contextual greeting
    ============================================================ */
-const AI_QUESTIONS = [
-  'Расскажи о ваших общих воспоминаниях, шутках или особых историях, которые вас связывают.',
-  'Какие сейчас у вас отношения? Близкие друзья, давно не общались, родственники, по работе?',
-  'Что у этого человека сейчас в жизни? Новый этап, переезд, успех, тяжёлый период?',
-  'Какой тон поздравления нужен? Тёплый и душевный / шутливый / благодарный / формальный?',
-  'Что-то особенное в этом году? Юбилей, новое начало, важное событие, или просто очередной день рождения?'
+// Пулы наводящих вопросов — для каждого шага случайно выбирается один,
+// чтобы при повторных запусках чат не звучал одинаково.
+const AI_QUESTION_POOLS = [
+  // Шаг 1 — общие воспоминания, истории, шутки
+  [
+    'Расскажи о ваших общих воспоминаниях, шутках или особых историях, которые вас связывают.',
+    'Какие у вас есть смешные моменты или истории, о которых только вы двое помните?',
+    'За что ты особенно благодарен этому человеку? Был случай, когда он сильно тебя выручил?',
+    'Что вас объединяет — общие интересы, любимые места, привычки, фразы?',
+    'Какая внутренняя шутка или прикол всегда между вами повторяется?',
+    'Какое самое тёплое воспоминание о нём(ней) приходит первым в голову?'
+  ],
+  // Шаг 2 — текущие отношения
+  [
+    'Какие сейчас у вас отношения? Близкие друзья, давно не общались, родственники, по работе?',
+    'Кто он(а) для тебя сейчас — лучший друг, родственник, коллега, тот, с кем редко видишься?',
+    'Часто ли общаетесь? Раз в неделю, в месяц, или давно не виделись?',
+    'Насколько вы сейчас близки? Изменилось ли что-то за последний год?',
+    'Как часто пересекаетесь и через что — звонки, встречи, переписка?',
+    'Кем вы стали друг для друга со временем?'
+  ],
+  // Шаг 3 — что у человека сейчас в жизни
+  [
+    'Что у этого человека сейчас в жизни? Новый этап, переезд, успех, тяжёлый период?',
+    'Какой сейчас у него(неё) период — на подъёме, в развитии, или что-то трудное проходит?',
+    'Что-то важное у него(неё) случилось в этом году? Работа, отношения, переезд, проект?',
+    'Чем он(а) сейчас живёт — учёбой, карьерой, семьёй, хобби?',
+    'Что для него(неё) сейчас главное? Чем горит, к чему идёт?',
+    'Какие планы или мечты у него(неё) на ближайшее время?'
+  ],
+  // Шаг 4 — тон поздравления
+  [
+    'Какой тон поздравления нужен? Тёплый и душевный / шутливый / благодарный / формальный?',
+    'Как должно прозвучать поздравление — с теплотой, с приколом, серьёзно или с благодарностью?',
+    'Какое настроение хочешь передать — уют, юмор, искренность или эпичность?',
+    'Лучше тёплое и личное, или с шуткой, чтобы зашло легко?',
+    'Тон — как близкому другу, как старшему, или нейтрально-уважительный?',
+    'Хочешь, чтобы человек улыбнулся, расчувствовался или подумал?'
+  ],
+  // Шаг 5 — особенность этого года
+  [
+    'Что-то особенное в этом году? Юбилей, новое начало, важное событие, или просто очередной день рождения?',
+    'Этот год для него(неё) особенный? Круглая дата, новая глава, или просто очередной ДР?',
+    'Чего ему(ей) хочется в новом году жизни — конкретные цели, мечты, перемены?',
+    'Есть ли что-то, что хочется пожелать именно в этом году?',
+    'Что-то знаковое произошло перед этим днём рождения, что стоит упомянуть?',
+    'Если коротко — какое одно главное пожелание ты хочешь вложить в это сообщение?'
+  ]
 ];
 
+function pickRandomQuestions() {
+  return AI_QUESTION_POOLS.map(pool => pool[Math.floor(Math.random() * pool.length)]);
+}
+
 let aiChat = null;
-// { contactId, step, answers: [], generated: null|{text}|{error}, busy: false }
+// { contactId, step, answers: [], questions: [...], generated, busy, rendered }
 
 function openAIChat(contactId) {
   const c = state.contacts.find(x => x.id === contactId);
   if (!c) { toast('Контакт не найден', 'error'); return; }
-  aiChat = { contactId, step: 0, answers: [], generated: null, busy: false };
+  aiChat = {
+    contactId,
+    step: 0,
+    answers: [],
+    questions: pickRandomQuestions(),
+    generated: null,
+    busy: false,
+    rendered: { intro: false, lastQuestionStep: -1, loaderShown: false, resultShown: false }
+  };
+  document.getElementById('ai-chat-body').innerHTML = '';
   document.getElementById('ai-chat').classList.add('show');
   document.getElementById('ai-chat-fab').classList.remove('show');
   document.getElementById('ai-chat-title').textContent = `Поздравить ${c.name.split(/\s+/)[0]}`;
   document.getElementById('ai-chat-sub').textContent = '5 вопросов — и идеальный текст';
+  document.getElementById('ai-chat-input-wrap').style.display = 'none';
   const av = document.getElementById('ai-chat-avatar');
   if (c.photoURL) { av.style.backgroundImage = `url('${esc(c.photoURL)}')`; av.textContent = ''; }
   else { av.style.backgroundImage = ''; av.textContent = '🎂'; }
   renderAIChat();
-  setTimeout(() => document.getElementById('ai-chat-textarea')?.focus(), 200);
+}
+
+/* ============================================================
+   TYPING ENGINE — печатает сообщения «как бот»
+   ============================================================ */
+function aiSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function aiTypeChars(el, text, opts = {}) {
+  const speed = opts.speed ?? 14;
+  const body = el.closest('.ai-chat-body');
+  return new Promise(resolve => {
+    el.textContent = '';
+    let i = 0;
+    const tick = () => {
+      if (!aiChat) { resolve(); return; }
+      if (i >= text.length) { resolve(); return; }
+      const ch = text[i];
+      i++;
+      el.textContent += ch;
+      if (body) body.scrollTop = body.scrollHeight;
+      let d = speed + (Math.random() * 12 - 4);
+      if (',;:'.includes(ch)) d += 70;
+      if ('.!?'.includes(ch)) d += 150;
+      if (ch === '\n') d += 100;
+      setTimeout(tick, Math.max(4, d));
+    };
+    tick();
+  });
+}
+
+async function aiAppendBotMessage(stepLabel, text, opts = {}) {
+  const body = document.getElementById('ai-chat-body');
+  const div = document.createElement('div');
+  div.className = 'ai-msg assistant';
+  div.innerHTML = `
+    <div class="ai-msg-step">${esc(stepLabel)}</div>
+    <div class="ai-msg-typing"><span class="ai-loading-dot"></span><span class="ai-loading-dot"></span><span class="ai-loading-dot"></span></div>
+  `;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+  await aiSleep(opts.thinkDelay ?? (500 + Math.random() * 400));
+  if (!aiChat) return div;
+  const typing = div.querySelector('.ai-msg-typing');
+  if (typing) typing.remove();
+  const span = document.createElement('span');
+  div.appendChild(span);
+  await aiTypeChars(span, text, opts);
+  return div;
+}
+
+function aiAppendUserMessage(text) {
+  const body = document.getElementById('ai-chat-body');
+  const div = document.createElement('div');
+  div.className = 'ai-msg user';
+  div.textContent = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
 }
 
 function closeAIChat() {
@@ -4153,96 +4409,128 @@ function openAIChatPicker() {
   });
 }
 
-function renderAIChat() {
-  const body = document.getElementById('ai-chat-body');
+async function renderAIChat() {
   if (!aiChat) return;
   const c = state.contacts.find(x => x.id === aiChat.contactId);
   if (!c) return;
+  const r = aiChat.rendered;
+  const body = document.getElementById('ai-chat-body');
 
-  let html = `<div class="ai-msg assistant">
-    <div class="ai-msg-step">Привет!</div>
-    Помогу написать персональное поздравление для <strong>${esc(c.name)}</strong>. Чем точнее ответишь — тем лучше получится. Поехали.
-  </div>`;
-
-  for (let i = 0; i < aiChat.step; i++) {
-    html += `<div class="ai-msg assistant">
-      <div class="ai-msg-step">Вопрос ${i+1} / 5</div>
-      ${esc(AI_QUESTIONS[i])}
-    </div>`;
-    html += `<div class="ai-msg user">${esc(aiChat.answers[i])}</div>`;
-  }
-
-  if (aiChat.step < 5) {
-    html += `<div class="ai-msg assistant">
-      <div class="ai-msg-step">Вопрос ${aiChat.step+1} / 5</div>
-      ${esc(AI_QUESTIONS[aiChat.step])}
-    </div>`;
-    document.getElementById('ai-chat-input-wrap').style.display = 'flex';
-  } else {
+  // 1) Интро (один раз)
+  if (!r.intro) {
+    r.intro = true;
     document.getElementById('ai-chat-input-wrap').style.display = 'none';
-    if (aiChat.busy) {
-      html += `<div class="ai-msg assistant">
-        <span class="ai-loading-dot"></span><span class="ai-loading-dot"></span><span class="ai-loading-dot"></span>
-        <span style="margin-left:8px;font-size:13px">пишу поздравление...</span>
-      </div>`;
-    } else if (aiChat.generated?.error) {
-      html += `<div class="ai-msg assistant" style="background:var(--red-bg);border-color:var(--red);color:var(--red)">
-        ⚠ ${esc(aiChat.generated.error)}
-      </div>
-      <div class="ai-result-actions">
-        <button class="ai-result-btn" data-action="retry">↻ Попробовать заново</button>
-      </div>`;
-    } else if (aiChat.generated?.text) {
-      html += `<div class="ai-msg result">${esc(aiChat.generated.text)}</div>
-      <div class="ai-result-actions">
-        <button class="ai-result-btn primary" data-action="copy">📋 Скопировать</button>
-        <button class="ai-result-btn" data-action="regen">↻ Заново</button>
-        <button class="ai-result-btn" data-action="restart">⟲ Сначала</button>
-      </div>`;
-    }
+    const intro = `Помогу написать персональное поздравление для ${c.name}. Чем точнее ответишь — тем лучше получится. Поехали.`;
+    await aiAppendBotMessage('Привет!', intro, { speed: 12, thinkDelay: 350 });
+    if (!aiChat) return;
   }
 
-  body.innerHTML = html;
-  body.scrollTop = body.scrollHeight;
+  // 2) Текущий вопрос (если ещё не задан)
+  if (aiChat.step < 5 && r.lastQuestionStep < aiChat.step) {
+    r.lastQuestionStep = aiChat.step;
+    document.getElementById('ai-chat-input-wrap').style.display = 'none';
+    const q = aiChat.questions[aiChat.step];
+    await aiAppendBotMessage(`Вопрос ${aiChat.step + 1} / 5`, q, { speed: 14 });
+    if (!aiChat) return;
+    document.getElementById('ai-chat-input-wrap').style.display = 'flex';
+    setTimeout(() => document.getElementById('ai-chat-textarea')?.focus(), 80);
+    return;
+  }
 
-  body.querySelectorAll('[data-action]').forEach(b => {
-    b.onclick = () => handleAIChatAction(b.dataset.action);
-  });
+  // 3) После 5 ответов — генерация
+  if (aiChat.step >= 5) {
+    document.getElementById('ai-chat-input-wrap').style.display = 'none';
 
-  // Auto-start generation when reaching step 5
-  if (aiChat.step === 5 && !aiChat.busy && !aiChat.generated) {
-    runAIGeneration();
+    if (aiChat.busy && !r.loaderShown) {
+      r.loaderShown = true;
+      const div = document.createElement('div');
+      div.className = 'ai-msg assistant';
+      div.id = 'ai-chat-loading';
+      div.innerHTML = `<span class="ai-loading-dot"></span><span class="ai-loading-dot"></span><span class="ai-loading-dot"></span><span style="margin-left:8px;font-size:13px">пишу поздравление...</span>`;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    if (!aiChat.busy && aiChat.generated && !r.resultShown) {
+      r.resultShown = true;
+      const loader = document.getElementById('ai-chat-loading');
+      if (loader) loader.remove();
+
+      if (aiChat.generated.error) {
+        const err = document.createElement('div');
+        err.className = 'ai-msg assistant';
+        err.style.cssText = 'background:var(--red-bg);border-color:var(--red);color:var(--red)';
+        err.textContent = '⚠ ' + aiChat.generated.error;
+        body.appendChild(err);
+        const actions = document.createElement('div');
+        actions.className = 'ai-result-actions';
+        actions.innerHTML = `<button class="ai-result-btn" data-action="retry">↻ Попробовать заново</button>`;
+        body.appendChild(actions);
+        actions.querySelector('[data-action]').onclick = () => handleAIChatAction('retry');
+      } else if (aiChat.generated.text) {
+        const div = document.createElement('div');
+        div.className = 'ai-msg result';
+        const span = document.createElement('span');
+        div.appendChild(span);
+        body.appendChild(div);
+        body.scrollTop = body.scrollHeight;
+        await aiTypeChars(span, aiChat.generated.text, { speed: 10 });
+        if (!aiChat) return;
+        const actions = document.createElement('div');
+        actions.className = 'ai-result-actions';
+        actions.innerHTML = `
+          <button class="ai-result-btn primary" data-action="copy">📋 Скопировать</button>
+          <button class="ai-result-btn" data-action="regen">↻ Заново</button>
+          <button class="ai-result-btn" data-action="restart">⟲ Сначала</button>
+        `;
+        body.appendChild(actions);
+        actions.querySelectorAll('[data-action]').forEach(b => {
+          b.onclick = () => handleAIChatAction(b.dataset.action);
+        });
+        body.scrollTop = body.scrollHeight;
+      }
+    }
   }
 }
 
 function handleAIChatAction(action) {
   if (action === 'copy') {
-    if (aiChat.generated?.text) {
+    if (aiChat?.generated?.text) {
       navigator.clipboard.writeText(aiChat.generated.text);
       toast('Скопировано', 'success');
     }
   } else if (action === 'regen') {
+    // Перегенерация: убираем старый результат, генерим новый (вопросы те же)
+    const body = document.getElementById('ai-chat-body');
+    body.querySelectorAll('.ai-msg.result, .ai-result-actions').forEach(n => n.remove());
     aiChat.generated = null;
+    aiChat.rendered.loaderShown = false;
+    aiChat.rendered.resultShown = false;
     runAIGeneration();
   } else if (action === 'restart' || action === 'retry') {
+    // Полный рестарт: новые рандомные вопросы из пулов
     aiChat.step = 0;
     aiChat.answers = [];
+    aiChat.questions = pickRandomQuestions();
     aiChat.generated = null;
     aiChat.busy = false;
+    aiChat.rendered = { intro: false, lastQuestionStep: -1, loaderShown: false, resultShown: false };
+    document.getElementById('ai-chat-body').innerHTML = '';
     renderAIChat();
-    setTimeout(() => document.getElementById('ai-chat-textarea')?.focus(), 100);
   }
 }
 
 async function runAIGeneration() {
   aiChat.busy = true;
   aiChat.generated = null;
+  aiChat.rendered.loaderShown = false;
+  aiChat.rendered.resultShown = false;
   renderAIChat();
   const c = state.contacts.find(x => x.id === aiChat.contactId);
   const result = await generateContextualGreeting(c, aiChat.answers);
+  if (!aiChat) return;
   aiChat.busy = false;
   aiChat.generated = result;
-  // Save greeting to history on success
   if (result.text) saveBdayGreeting(c, result.text);
   renderAIChat();
 }
@@ -4256,7 +4544,12 @@ function submitAIAnswer() {
   aiChat.step++;
   ta.value = '';
   ta.style.height = 'auto';
-  renderAIChat();
+  aiAppendUserMessage(v);
+  if (aiChat.step >= 5) {
+    runAIGeneration();
+  } else {
+    renderAIChat();
+  }
 }
 
 async function generateContextualGreeting(contact, answers) {
@@ -4278,7 +4571,8 @@ async function generateContextualGreeting(contact, answers) {
   if (contact.notes) prompt += `- Доп. заметки: ${contact.notes}\n`;
 
   prompt += '\nКОНТЕКСТ ОТНОШЕНИЙ (это сказал автор поздравления):\n\n';
-  AI_QUESTIONS.forEach((q, i) => {
+  const askedQuestions = (aiChat?.questions) || AI_QUESTION_POOLS.map(p => p[0]);
+  askedQuestions.forEach((q, i) => {
     if (answers[i]) {
       prompt += `❓ ${q}\n💬 "${answers[i]}"\n\n`;
     }
@@ -4358,6 +4652,33 @@ document.addEventListener('visibilitychange', () => {
     if (currentView === 'today') render();
   }
 });
+
+/* ============ I18N ============ */
+(function () {
+  const ORBIT_DICT = {
+    'hub_btn.tip':   { ru: 'К списку приложений', en: 'Back to dashboard' },
+    'nav.today':     { ru: 'Сегодня', en: 'Today' },
+    'nav.contacts':  { ru: 'Контакты', en: 'Contacts' },
+    'nav.bdays':     { ru: 'Дни рождения', en: 'Birthdays' },
+    'nav.wishlist':  { ru: 'Вишлист', en: 'Wishlist' },
+    'nav.settings':  { ru: 'Настройки', en: 'Settings' },
+    'add.contact':   { ru: '+ Новый', en: '+ New' }
+  };
+  function init() {
+    if (!window.I18N) return;
+    I18N.init({
+      dict: ORBIT_DICT,
+      mountTarget: '.sidebar-foot',
+      getDb: () => fb?.db,
+      getUser: () => currentUser,
+      onChange: () => { try { render(); } catch(e){} }
+    });
+  }
+  if (window.I18N) init(); else setTimeout(init, 50);
+  if (typeof fb !== 'undefined' && fb?.auth?.onAuthStateChanged) {
+    fb.auth.onAuthStateChanged(() => { if (window.I18N) I18N.refresh(); });
+  }
+})();
 
 </script>
 
