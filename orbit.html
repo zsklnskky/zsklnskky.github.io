@@ -97,8 +97,8 @@ body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
@@ -261,7 +261,7 @@ a { color: var(--accent); text-decoration: none; }
 .side-stat-row + .side-stat-row { border-top: 1px dashed var(--border); margin-top: 2px; padding-top: 8px; }
 .side-stat-label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text2);
   text-transform: uppercase;
   letter-spacing: .08em;
@@ -269,7 +269,7 @@ a { color: var(--accent); text-decoration: none; }
 }
 .side-stat-value {
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--text);
 }
@@ -289,7 +289,7 @@ a { color: var(--accent); text-decoration: none; }
 .nav-section + .nav-section { margin-top: 6px; }
 .nav-title {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -300,11 +300,11 @@ a { color: var(--accent); text-decoration: none; }
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 9px 10px;
+  gap: 10px;
+  padding: 11px 12px;
   color: var(--text2);
-  border-radius: 9px;
-  font-size: 13px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 600;
   text-align: left;
   transition: all .1s var(--easing);
@@ -376,7 +376,7 @@ a { color: var(--accent); text-decoration: none; }
   line-height: 1;
 }
 .page-title {
-  font-size: 36px;
+  font-size: 40px;
   font-weight: 900;
   letter-spacing: -.01em;
   line-height: 1.1;
@@ -486,7 +486,7 @@ a { color: var(--accent); text-decoration: none; }
   margin-bottom: 14px;
 }
 .section-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
   display: flex; align-items: center; gap: 10px;
 }
@@ -536,13 +536,13 @@ a { color: var(--accent); text-decoration: none; }
 }
 .reach-info { flex: 1; min-width: 0; }
 .reach-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
 }
 .reach-sub {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text3);
   letter-spacing: .03em;
   display: flex; align-items: center; gap: 8px;
@@ -728,14 +728,14 @@ a { color: var(--accent); text-decoration: none; }
   margin-bottom: 12px;
 }
 .contact-card-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .contact-card-sub {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text3);
   letter-spacing: .03em;
 }
@@ -793,15 +793,15 @@ a { color: var(--accent); text-decoration: none; }
 }
 .detail-info { flex: 1; min-width: 0; }
 .detail-name {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 900;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .detail-meta-row {
   display: flex; gap: 8px; flex-wrap: wrap;
   align-items: center;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text2);
 }
 .detail-meta-row .pill {
@@ -881,15 +881,15 @@ a { color: var(--accent); text-decoration: none; }
 }
 .bio-label {
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text3);
   text-transform: uppercase;
   letter-spacing: .12em;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .bio-value {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   word-break: break-word;
 }
@@ -1264,20 +1264,20 @@ a { color: var(--accent); text-decoration: none; }
 .field-label {
   display: block;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text2);
   letter-spacing: .1em;
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .field-input, .field-textarea, .field-select {
   width: 100%;
-  padding: 11px 13px;
+  padding: 12px 14px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
   color: var(--text);
   transition: border-color .12s var(--easing);
@@ -1391,6 +1391,461 @@ a { color: var(--accent); text-decoration: none; }
 @keyframes bannerDrop {
   from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
   to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+/* ── WISHLIST ── */
+.wish-header-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 22px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.wish-header-info { flex: 1; min-width: 200px; }
+.wish-header-title { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+.wish-header-sub { font-size: 13px; color: var(--text2); line-height: 1.55; }
+.wish-share-btn {
+  padding: 12px 22px;
+  background: var(--accent-grad);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: 0 8px 20px var(--accent-shadow);
+}
+
+.wish-list {
+  display: flex; flex-direction: column;
+  gap: 12px;
+}
+.wish-item {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex; align-items: flex-start; gap: 16px;
+  position: relative;
+  transition: border-color .12s var(--easing);
+}
+.wish-item:hover { border-color: var(--border2); }
+.wish-item-prio {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900;
+  font-size: 14px;
+  flex-shrink: 0;
+  font-family: var(--mono);
+}
+.wish-item-prio.p1 { background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); }
+.wish-item-prio.p2 { background: linear-gradient(135deg, #FB7185 0%, #DB2777 100%); }
+.wish-item-prio.p3 { background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+.wish-item-prio.p4 { background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%); }
+.wish-item-prio.p5 { background: var(--s3); color: var(--text2); }
+
+.wish-item-main { flex: 1; min-width: 0; }
+.wish-item-title {
+  font-size: 16px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  display: flex; align-items: center; gap: 10px;
+}
+.wish-item-title a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--text3);
+}
+.wish-item-title a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+.wish-item-desc {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+.wish-item-meta {
+  display: flex; gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+.wish-item-meta .pill {
+  padding: 3px 9px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-weight: 700;
+}
+.wish-item-meta .pill.price {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.wish-item-actions {
+  display: flex; gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.wish-reserved-badge {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--green-bg);
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wish-reservation-list {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--bg2);
+  border-radius: 12px;
+  border: 1px dashed var(--border);
+}
+.wish-reservation-row {
+  display: flex; align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 13px;
+}
+.wish-rev-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--s2);
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.wish-rev-name { flex: 1; font-weight: 600; }
+.wish-rev-mine { color: var(--accent); font-weight: 800; }
+
+.wish-reserve-btn {
+  padding: 10px 18px;
+  background: var(--accent-grad);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-top: 12px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.wish-reserve-btn:hover { transform: translateY(-1px); }
+.wish-reserve-btn.cancel {
+  background: var(--red-bg);
+  color: var(--red);
+  border: 1px solid var(--red);
+}
+
+.share-modal-link {
+  padding: 14px 16px;
+  background: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  word-break: break-all;
+  margin-bottom: 14px;
+  color: var(--accent);
+  line-height: 1.5;
+}
+
+/* Visitor wishlist view */
+.visitor-shell {
+  min-height: 100vh;
+  padding: 36px 24px 80px;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(244,114,182,.08) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(124,58,237,.08) 0%, transparent 55%),
+    var(--bg);
+  display: flex; justify-content: center;
+}
+.visitor-inner {
+  width: 100%; max-width: 760px;
+}
+.visitor-head {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.visitor-owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  margin-bottom: 14px;
+}
+.visitor-owner-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background-size: cover; background-position: center;
+  background-color: var(--s2);
+  font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.visitor-owner-name { font-size: 14px; font-weight: 800; }
+.visitor-title {
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 6px;
+  background: var(--accent-grad);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.visitor-sub {
+  font-size: 14px;
+  color: var(--text2);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+.visitor-back {
+  position: fixed;
+  top: 18px; left: 18px;
+  padding: 8px 16px;
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  z-index: 50;
+}
+
+/* ── AI CHAT WIDGET (right bottom) ── */
+.ai-chat-fab {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 600;
+  width: 58px; height: 58px;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  color: #fff;
+  font-size: 24px;
+  display: none;
+  align-items: center; justify-content: center;
+  box-shadow: 0 10px 28px var(--accent-shadow);
+  transition: transform .15s var(--easing);
+}
+.ai-chat-fab.show { display: flex; }
+.ai-chat-fab:hover { transform: scale(1.08); }
+
+.ai-chat {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  z-index: 700;
+  width: 400px;
+  max-width: calc(100vw - 30px);
+  height: min(620px, calc(100vh - 40px));
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  animation: chatIn .25s var(--easing);
+}
+@keyframes chatIn {
+  from { opacity: 0; transform: translateY(20px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+.ai-chat.show { display: flex; }
+.ai-chat-head {
+  padding: 16px 18px;
+  background: var(--accent-grad);
+  color: #fff;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.ai-chat-head-info { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+.ai-chat-head-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  background-size: cover;
+  background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.ai-chat-head-text { min-width: 0; }
+.ai-chat-head-title { font-size: 14px; font-weight: 800; line-height: 1.2; }
+.ai-chat-head-sub { font-size: 11px; opacity: .9; margin-top: 2px; }
+.ai-chat-close-btn {
+  background: rgba(255,255,255,.2);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ai-chat-close-btn:hover { background: rgba(255,255,255,.32); }
+
+.ai-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 14px;
+  display: flex; flex-direction: column;
+  gap: 10px;
+}
+.ai-msg {
+  max-width: 88%;
+  padding: 11px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+.ai-msg.assistant {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 16px 16px 16px 4px;
+  align-self: flex-start;
+}
+.ai-msg.user {
+  background: var(--accent-grad);
+  color: #fff;
+  border-radius: 16px 16px 4px 16px;
+  align-self: flex-end;
+  font-weight: 600;
+}
+.ai-msg.result {
+  background: var(--accent-bg);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  border-radius: 16px;
+  align-self: stretch;
+  max-width: 100%;
+  white-space: pre-wrap;
+  font-size: 15px;
+  line-height: 1.65;
+  padding: 16px 18px;
+}
+.ai-msg-step {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.ai-msg.assistant.muted {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  font-size: 12px;
+  font-style: italic;
+}
+.ai-loading-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-right: 4px;
+  animation: aiLoading 1.4s infinite ease-in-out;
+}
+.ai-loading-dot:nth-child(2) { animation-delay: .2s; }
+.ai-loading-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes aiLoading {
+  0%, 100% { opacity: .3; transform: scale(.8); }
+  50%      { opacity: 1; transform: scale(1.2); }
+}
+
+.ai-chat-input-wrap {
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: flex-end;
+  background: var(--s1);
+}
+.ai-chat-textarea {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 11px 14px;
+  font-size: 15px;
+  outline: none;
+  resize: none;
+  color: var(--text);
+  font-family: inherit;
+  line-height: 1.45;
+  max-height: 120px;
+  min-height: 44px;
+  transition: border-color .12s var(--easing);
+}
+.ai-chat-textarea:focus { border-color: var(--accent); }
+.ai-chat-send-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--accent-grad);
+  color: #fff;
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 16px var(--accent-shadow);
+  transition: transform .12s var(--easing);
+  flex-shrink: 0;
+}
+.ai-chat-send-btn:hover { transform: translateY(-1px); }
+.ai-chat-send-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+.ai-result-actions {
+  display: flex; gap: 8px;
+  align-self: stretch;
+  margin-top: 4px;
+}
+.ai-result-btn {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  transition: all .12s var(--easing);
+}
+.ai-result-btn:hover { border-color: var(--accent); background: var(--accent-bg); }
+.ai-result-btn.primary {
+  background: var(--accent-grad);
+  color: #fff;
+  border-color: transparent;
+}
+
+@media (max-width: 640px) {
+  .ai-chat {
+    bottom: 0; right: 0; left: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 92vh;
+    border-radius: 22px 22px 0 0;
+  }
+  .ai-chat-fab { bottom: 16px; right: 16px; width: 52px; height: 52px; font-size: 22px; }
 }
 
 /* Mobile */
@@ -1523,6 +1978,26 @@ a { color: var(--accent); text-decoration: none; }
       <button class="btn-ghost" data-close>Отмена</button>
       <button class="btn-danger" id="confirm-ok">Подтвердить</button>
     </div>
+  </div>
+</div>
+
+<!-- ============== AI CHAT WIDGET ============== -->
+<button class="ai-chat-fab" id="ai-chat-fab" title="Помощник поздравлений">💬</button>
+<div class="ai-chat" id="ai-chat">
+  <div class="ai-chat-head">
+    <div class="ai-chat-head-info">
+      <div class="ai-chat-head-avatar" id="ai-chat-avatar">🎂</div>
+      <div class="ai-chat-head-text">
+        <div class="ai-chat-head-title" id="ai-chat-title">Помощник поздравлений</div>
+        <div class="ai-chat-head-sub" id="ai-chat-sub">Готов помочь</div>
+      </div>
+    </div>
+    <button class="ai-chat-close-btn" id="ai-chat-close">×</button>
+  </div>
+  <div class="ai-chat-body" id="ai-chat-body"></div>
+  <div class="ai-chat-input-wrap" id="ai-chat-input-wrap">
+    <textarea class="ai-chat-textarea" id="ai-chat-textarea" placeholder="Твой ответ..." rows="1"></textarea>
+    <button class="ai-chat-send-btn" id="ai-chat-send">→</button>
   </div>
 </div>
 
@@ -2102,6 +2577,7 @@ function renderSidebar() {
   `;
 
   const todayCount = getTodayBdays().length;
+  const wishCount = (state.wishlist?.items || []).length;
   document.getElementById('nav-section').innerHTML = `
     <div class="nav-title">Главное</div>
     <button class="nav-item ${currentView === 'today' ? 'active' : ''}" data-view="today">
@@ -2117,6 +2593,11 @@ function renderSidebar() {
     <button class="nav-item ${currentView === 'birthdays' ? 'active' : ''}" data-view="birthdays">
       <span class="nav-item-icon">🎂</span>
       <span class="nav-item-name">Дни рождения</span>
+    </button>
+    <button class="nav-item ${currentView === 'wishlist' ? 'active' : ''}" data-view="wishlist">
+      <span class="nav-item-icon">💝</span>
+      <span class="nav-item-name">Мой вишлист</span>
+      ${wishCount ? `<span class="nav-item-badge" style="background:var(--s2);color:var(--text2)">${wishCount}</span>` : ''}
     </button>
     <div class="nav-title" style="margin-top:14px">Настройки</div>
     <button class="nav-item ${currentView === 'settings' ? 'active' : ''}" data-view="settings">
@@ -2501,6 +2982,7 @@ function renderContactDetail(id) {
         </div>
         <div class="detail-actions">
           ${bdayToday ? `<button class="quick-btn" id="open-bday-btn" title="Поздравить" style="background:var(--accent-grad);color:white;border-color:var(--accent)">🎂</button>` : ''}
+          <button class="quick-btn" id="ai-helper-btn" title="Помощник поздравлений">💬</button>
           <button class="quick-btn" id="edit-btn" title="Редактировать">✎</button>
           <button class="quick-btn" id="delete-btn" title="Удалить">🗑</button>
         </div>
@@ -2549,24 +3031,12 @@ function renderContactDetail(id) {
         </div>
       ` : ''}
 
-      ${interactions.length ? `
-        <div class="section" style="margin-top:0">
-          <div class="section-head"><div class="section-title">📜 История общения</div></div>
-          <div class="timeline">
-            ${interactions.slice(0, 30).map(i => `
-              <div class="timeline-item">
-                <div class="timeline-date">${formatFullDate(i.date)} · ${formatRelativeDate(i.date)}</div>
-                <div class="timeline-topic"><span class="timeline-type">${INTERACTION_TYPES[i.type]?.icon || '✨'}</span>${esc(i.topic || INTERACTION_TYPES[i.type]?.name || 'общение')}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      ` : ''}
     </div>
   `;
   document.getElementById('main-content').innerHTML = html;
 
   document.getElementById('back-btn').onclick = () => navigateTo('contacts');
+  document.getElementById('ai-helper-btn').onclick = () => openAIChat(id);
   document.getElementById('edit-btn').onclick = () => openEditModal(id);
   document.getElementById('delete-btn').onclick = () => {
     showConfirm('Удалить контакт?', `${c.name} и вся история общения будут удалены безвозвратно.`, () => {
@@ -2788,13 +3258,14 @@ function renderBdayView(c) {
 
     <div class="greeting-card">
       <div class="greeting-card-head">
-        <div class="greeting-card-title">— текст поздравления —</div>
-        <div class="greeting-card-actions">
-          <button class="quick-btn" id="greet-refresh-btn" title="Сгенерировать заново">↻</button>
-          <button class="quick-btn" id="greet-copy-btn" title="Скопировать">📋</button>
-        </div>
+        <div class="greeting-card-title">— персональное поздравление —</div>
       </div>
-      <div class="greeting-text" id="greeting-text">${cachedGreeting ? esc(cachedGreeting) : '<div class="greeting-loading">Gemini пишет персональное поздравление...</div>'}</div>
+      <div class="greeting-text" id="greeting-text" style="text-align:center;padding:18px 12px">
+        <div style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:16px">
+          Помощник задаст 5 вопросов и напишет идеальный текст с учётом ваших отношений, контекста и нужного тона.
+        </div>
+        <button class="bday-action primary" id="open-ai-helper">💬 Открыть помощника</button>
+      </div>
     </div>
 
     <div class="bday-actions">
@@ -2817,23 +3288,11 @@ function renderBdayView(c) {
     ` : ''}
   `;
 
-  document.getElementById('greet-refresh-btn').onclick = () => loadGreeting(c, true);
-  document.getElementById('greet-copy-btn').onclick = () => {
-    const t = document.getElementById('greeting-text').textContent;
-    if (t && !t.includes('пишет')) {
-      navigator.clipboard.writeText(t);
-      toast('Скопировано', 'success');
-    }
-  };
+  document.getElementById('open-ai-helper').onclick = () => openAIChat(c.id);
   document.getElementById('bday-log-btn').onclick = () => {
     logInteraction(c.id, 'other', '🎂 Поздравил с днём рождения');
-    // Save greeting to history
-    const text = document.getElementById('greeting-text').textContent;
-    if (text && !text.includes('пишет')) saveBdayGreeting(c, text);
     toast('Записано! 🎉', 'success');
   };
-
-  if (!cachedGreeting) loadGreeting(c);
 }
 
 async function loadGreeting(c, force) {
@@ -2883,6 +3342,7 @@ function openEditModal(id) {
     ? { id: uuid(), name: '', circle: 'friend', interactionInterval: 30, interests: [], contact: {}, created: Date.now() }
     : JSON.parse(JSON.stringify(state.contacts.find(c => c.id === id)));
   document.getElementById('edit-modal-title').textContent = isNew ? 'Новый контакт' : 'Редактировать';
+  document.getElementById('edit-save-btn').onclick = saveContactFromForm;
   renderEditForm();
   document.getElementById('modal-edit').classList.add('open');
 }
@@ -3001,7 +3461,7 @@ document.getElementById('photo-input').onchange = async (e) => {
   e.target.value = '';
 };
 
-document.getElementById('edit-save-btn').onclick = () => {
+function saveContactFromForm() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { toast('Имя обязательно', 'error'); return; }
   editForm.name = name;
@@ -3026,14 +3486,14 @@ document.getElementById('edit-save-btn').onclick = () => {
 
   document.getElementById('modal-edit').classList.remove('open');
   queueSave();
-  // If we were editing on detail page, refresh it
   if (currentView.startsWith('contact:') && currentView.slice(8) === editForm.id) {
     renderContactDetail(editForm.id);
   } else {
     render();
   }
   toast('Сохранено', 'success');
-};
+}
+document.getElementById('edit-save-btn').onclick = saveContactFromForm;
 
 /* ============================================================
    CONFIRM
@@ -3062,16 +3522,31 @@ function navigateTo(view) {
 }
 function render() {
   if (!currentUser) return;
+  if (currentView.startsWith('wishlist-visitor:')) {
+    // Visitor mode — different shell
+    renderWishlistVisitor(currentView.slice(17));
+    return;
+  }
   renderSidebar();
   if (currentView === 'today') renderToday();
   else if (currentView === 'contacts') renderContactsList();
   else if (currentView === 'birthdays') renderBirthdays();
+  else if (currentView === 'wishlist') renderWishlist();
   else if (currentView === 'settings') renderSettings();
   else if (currentView.startsWith('contact:')) renderContactDetail(currentView.slice(8));
   else renderToday();
 }
 
 function enterApp() {
+  // Check URL for ?wishlist=ID — visitor mode
+  const url = new URL(location.href);
+  const wishParam = url.searchParams.get('wishlist');
+  if (wishParam) {
+    currentView = 'wishlist-visitor:' + wishParam;
+    render();
+    return;
+  }
+
   try {
     const last = localStorage.getItem(VIEW_KEY);
     if (last) currentView = last;
@@ -3089,6 +3564,608 @@ function closeMobileSidebar() {
 }
 
 /* ============================================================
+   WISHLIST — your items + shared link + reservations
+   ============================================================ */
+const WISHLIST_COLLECTION = 'wishlists';
+let visitorData = null;     // {shareId, doc} when visiting someone else's
+let visitorUnsub = null;
+
+function ensureWishlist() {
+  if (!state.wishlist) state.wishlist = { items: [], shareId: null, public: false };
+  if (!Array.isArray(state.wishlist.items)) state.wishlist.items = [];
+}
+
+function renderWishlist() {
+  ensureWishlist();
+  const items = state.wishlist.items.slice().sort((a, b) => (a.priority || 3) - (b.priority || 3));
+  const shareId = state.wishlist.shareId;
+  const shareUrl = shareId ? `${location.origin}${location.pathname}?wishlist=${shareId}` : '';
+
+  // Get reservations from shared doc cache (if any)
+  const sharedRes = state.wishlist.cachedReservations || {};
+
+  let html = `
+    <div class="page-head">
+      <div>
+        <div class="page-greeting">что хочется получить на ДР</div>
+        <div class="page-title">💝 Мой вишлист</div>
+      </div>
+      <button class="btn-primary" id="new-wish-btn">+ Добавить</button>
+    </div>
+
+    <div class="wish-header-card">
+      <div class="wish-header-info">
+        ${shareId ? `
+          <div class="wish-header-title">✅ Вишлист публикован</div>
+          <div class="wish-header-sub">
+            Поделись ссылкой — друзья увидят что ты хочешь и забронируют, чтобы не дарить дублей.<br>
+            <strong>Ты не увидишь</strong> кто что забронировал — будет сюрприз. Только количество броней.
+          </div>
+        ` : `
+          <div class="wish-header-title">📋 Только для меня</div>
+          <div class="wish-header-sub">
+            Жми «Поделиться» — получишь ссылку. Друзья откроют, увидят вишлист и смогут резервировать подарки.
+          </div>
+        `}
+      </div>
+      <button class="wish-share-btn" id="share-wish-btn">${shareId ? '🔗 Скопировать ссылку' : '📤 Поделиться'}</button>
+    </div>
+
+    ${items.length ? `<div class="wish-list">
+      ${items.map(item => {
+        const reservationCount = (sharedRes[item.id] || []).length;
+        const prioLabel = ['', '1', '2', '3', '4', '5'][item.priority || 3];
+        return `
+          <div class="wish-item">
+            <div class="wish-item-prio p${item.priority || 3}">${prioLabel}</div>
+            <div class="wish-item-main">
+              <div class="wish-item-title">
+                ${item.url
+                  ? `<a href="${esc(item.url)}" target="_blank" rel="noopener">${esc(item.title)}</a>`
+                  : esc(item.title)}
+              </div>
+              ${item.description ? `<div class="wish-item-desc">${esc(item.description)}</div>` : ''}
+              <div class="wish-item-meta">
+                ${item.priceApprox ? `<span class="pill price">${esc(item.priceApprox)}</span>` : ''}
+                <span class="pill">приоритет ${item.priority || 3}/5</span>
+                ${item.url ? `<span class="pill">🔗 ссылка есть</span>` : ''}
+              </div>
+              ${reservationCount > 0 ? `<div class="wish-reserved-badge">
+                ✅ Забронировано · ${reservationCount} ${reservationCount === 1 ? 'человек' : 'человек(а)'}
+              </div>` : ''}
+            </div>
+            <div class="wish-item-actions">
+              <button class="quick-btn" data-edit-wish="${esc(item.id)}" title="Редактировать">✎</button>
+              <button class="quick-btn" data-del-wish="${esc(item.id)}" title="Удалить">🗑</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>` : `<div class="empty">
+      <div class="empty-icon">💝</div>
+      <div class="empty-title">Пока пусто</div>
+      <div class="empty-sub">Добавь что хочется на день рождения — ссылка на товар, описание, примерная цена. Друзья смогут забронировать.</div>
+      <div style="margin-top:18px"><button class="btn-primary" id="first-wish-btn">+ Первый пункт</button></div>
+    </div>`}
+  `;
+
+  document.getElementById('main-content').innerHTML = html;
+
+  document.getElementById('new-wish-btn').onclick = () => openWishEditModal(null);
+  const fb2 = document.getElementById('first-wish-btn');
+  if (fb2) fb2.onclick = () => openWishEditModal(null);
+  document.getElementById('share-wish-btn').onclick = shareWishlist;
+  document.querySelectorAll('[data-edit-wish]').forEach(b => {
+    b.onclick = () => openWishEditModal(b.dataset.editWish);
+  });
+  document.querySelectorAll('[data-del-wish]').forEach(b => {
+    b.onclick = () => {
+      const item = state.wishlist.items.find(i => i.id === b.dataset.delWish);
+      if (!item) return;
+      showConfirm('Удалить пункт?', `«${item.title}» будет удалён из вишлиста.`, () => {
+        state.wishlist.items = state.wishlist.items.filter(i => i.id !== b.dataset.delWish);
+        queueSave();
+        syncWishlistToShared();
+        render();
+        toast('Удалено', 'success');
+      });
+    };
+  });
+
+  // Load cached reservations
+  if (shareId) loadSharedWishlistReservations(shareId);
+}
+
+async function loadSharedWishlistReservations(shareId) {
+  try {
+    const doc = await fb.db.collection(WISHLIST_COLLECTION).doc(shareId).get();
+    if (!doc.exists) return;
+    const data = doc.data();
+    const reservations = data.reservations || {};
+    // Group by item
+    const byItem = {};
+    Object.entries(reservations).forEach(([itemId, r]) => {
+      if (!byItem[itemId]) byItem[itemId] = [];
+      byItem[itemId].push(r);
+    });
+    state.wishlist.cachedReservations = byItem;
+    if (currentView === 'wishlist') renderWishlist();
+  } catch (e) { console.warn('Load wishlist reservations failed', e); }
+}
+
+async function shareWishlist() {
+  ensureWishlist();
+  // Generate shareId if not exists
+  if (!state.wishlist.shareId) state.wishlist.shareId = uuid().replace(/-/g, '').slice(0, 12);
+  state.wishlist.public = true;
+  await syncWishlistToShared();
+  const url = `${location.origin}${location.pathname}?wishlist=${state.wishlist.shareId}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast('Ссылка скопирована! Кидай друзьям', 'success');
+  } catch (e) {
+    prompt('Скопируй вручную:', url);
+  }
+  queueSave();
+  render();
+}
+
+async function syncWishlistToShared() {
+  if (!state.wishlist?.shareId || !currentUser) return;
+  try {
+    const docRef = fb.db.collection(WISHLIST_COLLECTION).doc(state.wishlist.shareId);
+    const existing = await docRef.get();
+    const reservations = existing.exists ? (existing.data().reservations || {}) : {};
+    await docRef.set({
+      ownerId: currentUser.uid,
+      ownerName: currentUser.displayName || currentUser.email,
+      ownerEmail: currentUser.email,
+      ownerPhotoURL: currentUser.photoURL || null,
+      items: state.wishlist.items.map(i => ({ ...i })),
+      reservations,
+      updatedAt: Date.now()
+    }, { merge: false });
+  } catch (e) {
+    console.error('Sync wishlist failed', e);
+    toast('Не удалось синхронизировать вишлист: ' + e.message, 'error');
+  }
+}
+
+let editingWishId = null;
+function openWishEditModal(id) {
+  ensureWishlist();
+  editingWishId = id;
+  const item = id ? state.wishlist.items.find(i => i.id === id) : null;
+  const e = item || { id: uuid(), title: '', description: '', url: '', priceApprox: '', priority: 3, createdAt: Date.now() };
+
+  document.getElementById('edit-modal-title').textContent = id ? 'Редактировать пункт' : 'Новый пункт вишлиста';
+  document.getElementById('edit-modal-body').innerHTML = `
+    <div class="field">
+      <label class="field-label">Что хочешь <span style="color:var(--red)">*</span></label>
+      <input class="field-input" id="w-title" value="${esc(e.title)}" placeholder="iPhone 17 Pro / книга / поездка...">
+    </div>
+    <div class="field">
+      <label class="field-label">Ссылка на товар</label>
+      <input class="field-input" id="w-url" value="${esc(e.url)}" placeholder="https://...">
+    </div>
+    <div class="field">
+      <label class="field-label">Описание</label>
+      <textarea class="field-textarea" id="w-desc" rows="3" placeholder="Какой цвет / размер / вариант / зачем нужно...">${esc(e.description)}</textarea>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label class="field-label">Примерная цена</label>
+        <input class="field-input" id="w-price" value="${esc(e.priceApprox)}" placeholder="120000 ₽ / $50">
+      </div>
+      <div class="field">
+        <label class="field-label">Приоритет (1=хочу сильно)</label>
+        <select class="field-select" id="w-prio">
+          <option value="1" ${e.priority===1?'selected':''}>1 — топ-приоритет</option>
+          <option value="2" ${e.priority===2?'selected':''}>2 — очень хочу</option>
+          <option value="3" ${e.priority===3?'selected':''}>3 — буду рад</option>
+          <option value="4" ${e.priority===4?'selected':''}>4 — было бы прикольно</option>
+          <option value="5" ${e.priority===5?'selected':''}>5 — мечта далёкая</option>
+        </select>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:6px">
+      💡 Внутренние ссылки маркетплейсов — сразу с твоим выбором (цвет, размер). Так друзья не ошибутся.
+    </div>
+  `;
+  document.getElementById('edit-save-btn').onclick = saveWishEdit;
+  document.getElementById('modal-edit').classList.add('open');
+}
+
+function saveWishEdit() {
+  ensureWishlist();
+  const title = document.getElementById('w-title').value.trim();
+  if (!title) { toast('Название обязательно', 'error'); return; }
+  const item = {
+    id: editingWishId || uuid(),
+    title,
+    url: document.getElementById('w-url').value.trim(),
+    description: document.getElementById('w-desc').value.trim(),
+    priceApprox: document.getElementById('w-price').value.trim(),
+    priority: parseInt(document.getElementById('w-prio').value) || 3,
+    updatedAt: Date.now()
+  };
+  if (!editingWishId) item.createdAt = Date.now();
+
+  const idx = state.wishlist.items.findIndex(i => i.id === item.id);
+  if (idx >= 0) state.wishlist.items[idx] = { ...state.wishlist.items[idx], ...item };
+  else state.wishlist.items.push(item);
+
+  // Restore edit-save-btn to default for contacts
+  document.getElementById('edit-save-btn').onclick = saveContactFromForm;
+
+  document.getElementById('modal-edit').classList.remove('open');
+  queueSave();
+  syncWishlistToShared();
+  render();
+  toast('Сохранено', 'success');
+  editingWishId = null;
+}
+
+/* ============================================================
+   WISHLIST VISITOR — when ?wishlist=ID is in URL
+   ============================================================ */
+async function renderWishlistVisitor(shareId) {
+  // Use a totally different shell — no sidebar
+  document.getElementById('shell').style.display = 'none';
+  let mainEl = document.getElementById('visitor-shell');
+  if (!mainEl) {
+    mainEl = document.createElement('div');
+    mainEl.id = 'visitor-shell';
+    mainEl.className = 'visitor-shell';
+    document.body.appendChild(mainEl);
+  }
+  mainEl.style.display = 'flex';
+
+  mainEl.innerHTML = `<div class="visitor-inner"><div class="empty"><div class="empty-icon">⏳</div><div class="empty-title">Загружаю вишлист...</div></div></div>`;
+
+  try {
+    const doc = await fb.db.collection(WISHLIST_COLLECTION).doc(shareId).get();
+    if (!doc.exists) {
+      mainEl.innerHTML = `<div class="visitor-inner"><div class="empty"><div class="empty-icon">😕</div><div class="empty-title">Вишлист не найден</div><div class="empty-sub">Возможно ссылка устарела или была удалена.</div></div></div>`;
+      return;
+    }
+    const data = doc.data();
+    visitorData = { shareId, doc: data };
+
+    // Subscribe for real-time updates
+    if (visitorUnsub) visitorUnsub();
+    visitorUnsub = fb.db.collection(WISHLIST_COLLECTION).doc(shareId).onSnapshot(d => {
+      if (d.exists) {
+        visitorData.doc = d.data();
+        renderVisitorContent();
+      }
+    });
+
+    renderVisitorContent();
+  } catch (e) {
+    mainEl.innerHTML = `<div class="visitor-inner"><div class="empty"><div class="empty-icon">⚠</div><div class="empty-title">Ошибка</div><div class="empty-sub">${esc(e.message)}</div></div></div>`;
+  }
+}
+
+function renderVisitorContent() {
+  const mainEl = document.getElementById('visitor-shell');
+  if (!mainEl || !visitorData) return;
+  const data = visitorData.doc;
+  const myUid = currentUser?.uid;
+  const ownerInitials = (data.ownerName || '?').split(/\s+/).map(p => p[0] || '').join('').slice(0,2).toUpperCase();
+  const items = (data.items || []).slice().sort((a, b) => (a.priority || 3) - (b.priority || 3));
+  const reservations = data.reservations || {};
+
+  // Group reservations by itemId
+  const resByItem = {};
+  Object.entries(reservations).forEach(([key, r]) => {
+    // key format: 'itemId__userId' OR 'itemId' (legacy)
+    const [itemId] = key.split('__');
+    if (!resByItem[itemId]) resByItem[itemId] = [];
+    resByItem[itemId].push({ key, ...r });
+  });
+
+  const isOwner = data.ownerId === myUid;
+
+  let html = `
+    <div class="visitor-inner">
+      <a href="${location.origin}${location.pathname}" class="visitor-back">← К моему ORBIT</a>
+      <div class="visitor-head">
+        <div class="visitor-owner">
+          <div class="visitor-owner-avatar" ${data.ownerPhotoURL ? `style="background-image:url('${esc(data.ownerPhotoURL)}')"` : ''}>${data.ownerPhotoURL ? '' : esc(ownerInitials)}</div>
+          <div class="visitor-owner-name">${esc(data.ownerName)}</div>
+        </div>
+        <div class="visitor-title">💝 Вишлист</div>
+        <div class="visitor-sub">
+          ${isOwner
+            ? 'Это твой вишлист — ты не видишь имена тех кто забронировал, только их количество. Сюрприз!'
+            : 'Выбери что хочешь подарить и забронируй — другие гости увидят твою бронь, чтобы не было дублей. Именинник не узнает кто что взял.'}
+        </div>
+      </div>
+
+      ${items.length ? `<div class="wish-list">
+        ${items.map(item => {
+          const itemReservations = resByItem[item.id] || [];
+          const myRes = itemReservations.find(r => r.byUid === myUid);
+          const othersRes = itemReservations.filter(r => r.byUid !== myUid);
+
+          return `
+            <div class="wish-item">
+              <div class="wish-item-prio p${item.priority || 3}">${item.priority || 3}</div>
+              <div class="wish-item-main">
+                <div class="wish-item-title">
+                  ${item.url
+                    ? `<a href="${esc(item.url)}" target="_blank" rel="noopener">${esc(item.title)}</a>`
+                    : esc(item.title)}
+                </div>
+                ${item.description ? `<div class="wish-item-desc">${esc(item.description)}</div>` : ''}
+                <div class="wish-item-meta">
+                  ${item.priceApprox ? `<span class="pill price">${esc(item.priceApprox)}</span>` : ''}
+                  <span class="pill">приоритет ${item.priority || 3}/5</span>
+                </div>
+
+                ${isOwner
+                  ? (itemReservations.length > 0
+                    ? `<div class="wish-reserved-badge">✅ Забронировано · ${itemReservations.length}</div>`
+                    : '')
+                  : `${itemReservations.length > 0 ? `<div class="wish-reservation-list">
+                      <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;font-weight:700">Кто берёт:</div>
+                      ${itemReservations.map(r => `<div class="wish-reservation-row">
+                        <div class="wish-rev-avatar" ${r.byPhotoURL ? `style="background-image:url('${esc(r.byPhotoURL)}')"` : ''}>${r.byPhotoURL ? '' : esc((r.byName || '?').slice(0,1).toUpperCase())}</div>
+                        <div class="wish-rev-name ${r.byUid === myUid ? 'wish-rev-mine' : ''}">${esc(r.byName)}${r.byUid === myUid ? ' (ты)' : ''}</div>
+                      </div>`).join('')}
+                    </div>` : ''}
+                    ${myRes
+                      ? `<button class="wish-reserve-btn cancel" data-cancel-res="${esc(item.id)}">✕ Отменить мою бронь</button>`
+                      : `<button class="wish-reserve-btn" data-reserve="${esc(item.id)}">🎁 Я возьму это</button>`}
+                  `}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>` : `<div class="empty"><div class="empty-icon">💝</div><div class="empty-title">Пока пусто</div><div class="empty-sub">Хозяин ещё не добавил пункты в вишлист.</div></div>`}
+    </div>
+  `;
+  mainEl.innerHTML = html;
+
+  mainEl.querySelectorAll('[data-reserve]').forEach(b => {
+    b.onclick = () => reserveWishItem(b.dataset.reserve);
+  });
+  mainEl.querySelectorAll('[data-cancel-res]').forEach(b => {
+    b.onclick = () => cancelReservation(b.dataset.cancelRes);
+  });
+}
+
+async function reserveWishItem(itemId) {
+  if (!visitorData || !currentUser) return;
+  const key = itemId + '__' + currentUser.uid;
+  try {
+    await fb.db.collection(WISHLIST_COLLECTION).doc(visitorData.shareId).update({
+      ['reservations.' + key]: {
+        itemId,
+        byUid: currentUser.uid,
+        byName: currentUser.displayName || currentUser.email,
+        byEmail: currentUser.email,
+        byPhotoURL: currentUser.photoURL || null,
+        at: Date.now()
+      },
+      updatedAt: Date.now()
+    });
+    toast('🎁 Забронировано', 'success');
+  } catch (e) {
+    toast('Не удалось забронировать: ' + e.message, 'error');
+  }
+}
+
+async function cancelReservation(itemId) {
+  if (!visitorData || !currentUser) return;
+  const key = itemId + '__' + currentUser.uid;
+  try {
+    await fb.db.collection(WISHLIST_COLLECTION).doc(visitorData.shareId).update({
+      ['reservations.' + key]: firebase.firestore.FieldValue.delete(),
+      updatedAt: Date.now()
+    });
+    toast('Бронь снята', 'success');
+  } catch (e) {
+    toast('Не удалось отменить: ' + e.message, 'error');
+  }
+}
+
+/* ============================================================
+   AI CHAT — 5 questions then generates contextual greeting
+   ============================================================ */
+const AI_QUESTIONS = [
+  'Расскажи о ваших общих воспоминаниях, шутках или особых историях, которые вас связывают.',
+  'Какие сейчас у вас отношения? Близкие друзья, давно не общались, родственники, по работе?',
+  'Что у этого человека сейчас в жизни? Новый этап, переезд, успех, тяжёлый период?',
+  'Какой тон поздравления нужен? Тёплый и душевный / шутливый / благодарный / формальный?',
+  'Что-то особенное в этом году? Юбилей, новое начало, важное событие, или просто очередной день рождения?'
+];
+
+let aiChat = null;
+// { contactId, step, answers: [], generated: null|{text}|{error}, busy: false }
+
+function openAIChat(contactId) {
+  const c = state.contacts.find(x => x.id === contactId);
+  if (!c) { toast('Контакт не найден', 'error'); return; }
+  aiChat = { contactId, step: 0, answers: [], generated: null, busy: false };
+  document.getElementById('ai-chat').classList.add('show');
+  document.getElementById('ai-chat-fab').classList.remove('show');
+  document.getElementById('ai-chat-title').textContent = `Поздравить ${c.name.split(/\s+/)[0]}`;
+  document.getElementById('ai-chat-sub').textContent = '5 вопросов — и идеальный текст';
+  const av = document.getElementById('ai-chat-avatar');
+  if (c.photoURL) { av.style.backgroundImage = `url('${esc(c.photoURL)}')`; av.textContent = ''; }
+  else { av.style.backgroundImage = ''; av.textContent = '🎂'; }
+  renderAIChat();
+  setTimeout(() => document.getElementById('ai-chat-textarea')?.focus(), 200);
+}
+
+function closeAIChat() {
+  document.getElementById('ai-chat').classList.remove('show');
+  if (aiChat && aiChat.contactId) {
+    const c = state.contacts.find(x => x.id === aiChat.contactId);
+    if (c && (isBdayToday(c.birthday) || daysUntilBday(c.birthday) <= 14)) {
+      document.getElementById('ai-chat-fab').classList.add('show');
+    }
+  }
+}
+
+function renderAIChat() {
+  const body = document.getElementById('ai-chat-body');
+  if (!aiChat) return;
+  const c = state.contacts.find(x => x.id === aiChat.contactId);
+  if (!c) return;
+
+  let html = `<div class="ai-msg assistant">
+    <div class="ai-msg-step">Привет!</div>
+    Помогу написать персональное поздравление для <strong>${esc(c.name)}</strong>. Чем точнее ответишь — тем лучше получится. Поехали.
+  </div>`;
+
+  for (let i = 0; i < aiChat.step; i++) {
+    html += `<div class="ai-msg assistant">
+      <div class="ai-msg-step">Вопрос ${i+1} / 5</div>
+      ${esc(AI_QUESTIONS[i])}
+    </div>`;
+    html += `<div class="ai-msg user">${esc(aiChat.answers[i])}</div>`;
+  }
+
+  if (aiChat.step < 5) {
+    html += `<div class="ai-msg assistant">
+      <div class="ai-msg-step">Вопрос ${aiChat.step+1} / 5</div>
+      ${esc(AI_QUESTIONS[aiChat.step])}
+    </div>`;
+    document.getElementById('ai-chat-input-wrap').style.display = 'flex';
+  } else {
+    document.getElementById('ai-chat-input-wrap').style.display = 'none';
+    if (aiChat.busy) {
+      html += `<div class="ai-msg assistant">
+        <span class="ai-loading-dot"></span><span class="ai-loading-dot"></span><span class="ai-loading-dot"></span>
+        <span style="margin-left:8px;font-size:13px">пишу поздравление...</span>
+      </div>`;
+    } else if (aiChat.generated?.error) {
+      html += `<div class="ai-msg assistant" style="background:var(--red-bg);border-color:var(--red);color:var(--red)">
+        ⚠ ${esc(aiChat.generated.error)}
+      </div>
+      <div class="ai-result-actions">
+        <button class="ai-result-btn" data-action="retry">↻ Попробовать заново</button>
+      </div>`;
+    } else if (aiChat.generated?.text) {
+      html += `<div class="ai-msg result">${esc(aiChat.generated.text)}</div>
+      <div class="ai-result-actions">
+        <button class="ai-result-btn primary" data-action="copy">📋 Скопировать</button>
+        <button class="ai-result-btn" data-action="regen">↻ Заново</button>
+        <button class="ai-result-btn" data-action="restart">⟲ Сначала</button>
+      </div>`;
+    }
+  }
+
+  body.innerHTML = html;
+  body.scrollTop = body.scrollHeight;
+
+  body.querySelectorAll('[data-action]').forEach(b => {
+    b.onclick = () => handleAIChatAction(b.dataset.action);
+  });
+
+  // Auto-start generation when reaching step 5
+  if (aiChat.step === 5 && !aiChat.busy && !aiChat.generated) {
+    runAIGeneration();
+  }
+}
+
+function handleAIChatAction(action) {
+  if (action === 'copy') {
+    if (aiChat.generated?.text) {
+      navigator.clipboard.writeText(aiChat.generated.text);
+      toast('Скопировано', 'success');
+    }
+  } else if (action === 'regen') {
+    aiChat.generated = null;
+    runAIGeneration();
+  } else if (action === 'restart' || action === 'retry') {
+    aiChat.step = 0;
+    aiChat.answers = [];
+    aiChat.generated = null;
+    aiChat.busy = false;
+    renderAIChat();
+    setTimeout(() => document.getElementById('ai-chat-textarea')?.focus(), 100);
+  }
+}
+
+async function runAIGeneration() {
+  aiChat.busy = true;
+  aiChat.generated = null;
+  renderAIChat();
+  const c = state.contacts.find(x => x.id === aiChat.contactId);
+  const result = await generateContextualGreeting(c, aiChat.answers);
+  aiChat.busy = false;
+  aiChat.generated = result;
+  // Save greeting to history on success
+  if (result.text) saveBdayGreeting(c, result.text);
+  renderAIChat();
+}
+
+function submitAIAnswer() {
+  if (!aiChat || aiChat.step >= 5) return;
+  const ta = document.getElementById('ai-chat-textarea');
+  const v = (ta.value || '').trim();
+  if (!v) return;
+  aiChat.answers.push(v);
+  aiChat.step++;
+  ta.value = '';
+  ta.style.height = 'auto';
+  renderAIChat();
+}
+
+async function generateContextualGreeting(contact, answers) {
+  const key = (state.settings.geminiApiKey || '').trim();
+  if (!key) return { error: 'Не задан AI-ключ. Зайди в Настройки.' };
+  const provider = detectAIProvider(key);
+  if (!provider) return { error: 'Неизвестный формат ключа' };
+
+  const age = ageOn(contact.birthday);
+  const ageNew = age != null ? age + 1 : null;
+  const interests = (contact.interests || []).join(', ');
+
+  let prompt = 'Ты — друг, который пишет персональное поздравление с днём рождения по-русски.\n\n';
+  prompt += 'КОМУ ПИШЕМ:\n';
+  prompt += `- Имя: ${contact.name}\n`;
+  if (ageNew) prompt += `- Исполняется: ${ageNew} лет\n`;
+  if (contact.occupation) prompt += `- Чем занимается: ${contact.occupation}\n`;
+  if (interests) prompt += `- Интересы: ${interests}\n`;
+  if (contact.notes) prompt += `- Доп. заметки: ${contact.notes}\n`;
+
+  prompt += '\nКОНТЕКСТ ОТНОШЕНИЙ (это сказал автор поздравления):\n\n';
+  AI_QUESTIONS.forEach((q, i) => {
+    if (answers[i]) {
+      prompt += `❓ ${q}\n💬 "${answers[i]}"\n\n`;
+    }
+  });
+
+  prompt += '\nТРЕБОВАНИЯ К ТЕКСТУ:\n';
+  prompt += '- 3-5 предложений, душевно и НЕ длинно\n';
+  prompt += '- ОБЯЗАТЕЛЬНО используй конкретные детали из ответов выше — это сердце поздравления\n';
+  prompt += '- Тон строго в соответствии с 4-м ответом (если шутка — пиши с лёгкостью, если тепло — тепло)\n';
+  prompt += '- НИКАКИХ штампов "счастья здоровья успехов в делах" и подобных пустых фраз\n';
+  prompt += '- От первого лица, как будто я лично говорю\n';
+  prompt += '- Без эмодзи и без преамбулы (не пиши "вот поздравление:" — сразу текст)\n';
+  prompt += '- На русском языке\n\n';
+  prompt += 'ТЕКСТ ПОЗДРАВЛЕНИЯ:';
+
+  try {
+    let text;
+    if (provider === 'groq') text = await callGroq(key, prompt);
+    else if (provider === 'openrouter') text = await callOpenRouter(key, prompt);
+    else if (provider === 'deepseek') text = await callDeepSeek(key, prompt);
+    else if (provider === 'mistral') text = await callMistral(key, prompt);
+    else text = await callGemini(key, prompt);
+    if (!text) return { error: 'Пустой ответ' };
+    return { text: text.trim() };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+/* ============================================================
    EVENT LISTENERS
    ============================================================ */
 document.getElementById('auth-signin-btn').onclick = authSignIn;
@@ -3099,6 +4176,22 @@ document.getElementById('mobile-hamburger').onclick = () => {
 };
 document.getElementById('sidebar-backdrop').onclick = closeMobileSidebar;
 document.getElementById('bday-close').onclick = closeBdayView;
+
+// AI Chat wiring
+document.getElementById('ai-chat-close').onclick = closeAIChat;
+document.getElementById('ai-chat-fab').onclick = () => {
+  // Reopen last chat (or last viewed contact)
+  if (aiChat?.contactId) openAIChat(aiChat.contactId);
+  else if (currentView.startsWith('contact:')) openAIChat(currentView.slice(8));
+};
+document.getElementById('ai-chat-send').onclick = submitAIAnswer;
+document.getElementById('ai-chat-textarea').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitAIAnswer(); }
+});
+document.getElementById('ai-chat-textarea').addEventListener('input', e => {
+  e.target.style.height = 'auto';
+  e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px';
+});
 
 document.addEventListener('click', e => {
   if (e.target.matches('[data-close]') || e.target.matches('.modal-bg')) {
