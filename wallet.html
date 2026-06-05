@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WALLET.</title>
 <link rel="icon" type="image/png" href="wallet-icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Comfortaa:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- ── FIREBASE SDK (auth + firestore for cross-device sync) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
@@ -32,7 +32,7 @@ try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error('Fireba
   --r-xs:    6px;
   --sidebar: 280px;
   --font:    'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --mono:    'JetBrains Mono', ui-monospace, monospace;
+  --mono:    'Nunito', -apple-system, sans-serif;
   --easing:  cubic-bezier(.4,.0,.2,1);
 }
 
@@ -1575,8 +1575,7 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
     <div class="sidebar-foot">
       <a href="index.html" class="hub-back-btn" title="К списку приложений">← Hub</a>
       <button class="btn btn-accent" data-action="open-add">+ Добавить трату</button>
-      <button class="btn btn-ghost" data-action="open-stats">📊 Статистика</button>
-      <button class="btn btn-ghost" data-action="open-monthly">📅 Месячный отчёт</button>
+      <button class="btn btn-ghost" data-action="open-stats">📊 Статистика и отчёты</button>
       <button class="btn btn-ghost" data-action="open-converter">💱 Конвертер валют</button>
       <div class="btn-row">
         <button class="btn btn-ghost" data-action="open-categories" title="Категории">📁</button>
@@ -1674,8 +1673,11 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
 <div class="modal-backdrop" id="modal-stats">
   <div class="modal lg">
     <div class="modal-head">
-      <div class="modal-title">📊 Статистика</div>
-      <button class="modal-close" data-close>×</button>
+      <div class="modal-title">📊 Статистика и отчёты</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-accent" data-action="open-monthly" style="padding:8px 14px;font-size:12px">📅 Месячный отчёт</button>
+        <button class="modal-close" data-close>×</button>
+      </div>
     </div>
     <div class="modal-body" id="stats-body"></div>
   </div>
@@ -2953,7 +2955,7 @@ document.addEventListener('click', e => {
     const a = act.dataset.action;
     if      (a === 'open-add')        openAddModal();
     else if (a === 'open-stats')      openStats();
-    else if (a === 'open-monthly')    openMonthly();
+    else if (a === 'open-monthly')    { closeModal('modal-stats'); openMonthly(); }
     else if (a === 'open-converter')  openConverter();
     else if (a === 'open-categories') openCategories();
     else if (a === 'open-settings')   openSettings();

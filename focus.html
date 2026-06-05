@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FOCUS · Productivity Tracker</title>
 <link rel="icon" type="image/png" href="focus-icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Comfortaa:wght@500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- ── FIREBASE SDK (auth + firestore for cross-device sync) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
@@ -32,7 +32,7 @@ try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error('Fireba
   --r-xs:    6px;
   --sidebar: 270px;
   --font:    'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --mono:    'JetBrains Mono', ui-monospace, monospace;
+  --mono:    'Nunito', -apple-system, sans-serif;
   --easing:  cubic-bezier(.4,.0,.2,1);
 }
 
@@ -2674,24 +2674,9 @@ html[data-theme="dark"] .col-count { background: rgba(255,255,255,.08); }
       <div class="ws-dropdown" id="ws-dropdown"></div>
     </div>
 
-    <div class="week-panel">
-      <div class="wf">
-        <label>📅 Прошедшая неделя</label>
-        <div class="date-pick-wrap">
-          <input type="date" id="wc-date" class="date-pick" title="Выбери любой день — высчитается Пн–Пт">
-          <span class="date-pick-preview" id="wc-preview">не выбрано</span>
-        </div>
-        <input type="hidden" id="wc">
-      </div>
-      <div class="wf">
-        <label>🗓 Плановая неделя</label>
-        <div class="date-pick-wrap">
-          <input type="date" id="wp-date" class="date-pick" title="Выбери любой день — высчитается Пн–Пт">
-          <span class="date-pick-preview" id="wp-preview">не выбрано</span>
-        </div>
-        <input type="hidden" id="wp">
-      </div>
-    </div>
+    <!-- Week ranges auto-computed from calendar; used by the report generator -->
+    <input type="hidden" id="wc">
+    <input type="hidden" id="wp">
 
     <!-- Today widget — fills empty sidebar space with useful productivity stats -->
     <div class="quick-stats" id="quick-stats"></div>
@@ -3012,11 +2997,7 @@ function load() {
   autoFillWeeksIfEmpty();
   document.getElementById('wc').value = state.wc || '';
   document.getElementById('wp').value = state.wp || '';
-  // Populate date pickers from saved dates
-  if (state.wcDate) document.getElementById('wc-date').value = state.wcDate;
-  if (state.wpDate) document.getElementById('wp-date').value = state.wpDate;
-  updateWeekPreview('wc');
-  updateWeekPreview('wp');
+  // Date pickers removed from UI; weeks come from autoFillWeeksIfEmpty()
   // Notes will be populated by setupNotes / renderNotesPage (multi-page system)
 }
 
