@@ -1,0 +1,57 @@
+{
+  "name": "Zahar Dashboard",
+  "short_name": "ZAHAR.",
+  "description": "Личный дашборд: задачи, финансы, пароли, контакты — всё в одном месте, с AI-помощником.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0A1525",
+  "background_color": "#0A1525",
+  "lang": "ru",
+  "categories": ["productivity", "lifestyle", "finance"],
+  "icons": [
+    {
+      "src": "focus-icon.png",
+      "sizes": "192x192 512x512 1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "focus-icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "FOCUS — задачи",
+      "short_name": "FOCUS",
+      "description": "Канбан задач и заметки",
+      "url": "/focus.html",
+      "icons": [{ "src": "focus-icon.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "WALLET — финансы",
+      "short_name": "WALLET",
+      "description": "Доходы, расходы, валюты",
+      "url": "/wallet.html",
+      "icons": [{ "src": "wallet-icon.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "PASSWORD — пароли",
+      "short_name": "PASSWORD",
+      "description": "Менеджер паролей с шифрованием",
+      "url": "/password.html",
+      "icons": [{ "src": "password-icon.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "ORBIT — близкие",
+      "short_name": "ORBIT",
+      "description": "Контакты, дни рождения, вишлист",
+      "url": "/orbit.html",
+      "icons": [{ "src": "orbit-icon.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

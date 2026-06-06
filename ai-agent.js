@@ -293,6 +293,8 @@
         // Firebase access
         getDb: () => null,
         getUser: () => null,
+        // Имя пользователя для персонализации
+        getUserName: null,  // (() => string) — если не задано, возьмём из getUser().displayName
         // Optional action runner: AI can include [[action:NAME|ARG]] tokens
         actionRunner: null
       }, cfg);
@@ -513,9 +515,42 @@
       wrap.querySelectorAll('[data-idx]').forEach(b => {
         b.onclick = () => {
           const s = list[+b.dataset.idx];
-          this._send(s.send || s.text);
+          if (typeof s.onClick === 'function') {
+            try { s.onClick(); } catch (e) {}
+          } else {
+            this._send(s.send || s.text);
+          }
         };
       });
+    },
+
+    // Публичный: программная отправка реплики бота (для AI Weekly Digest и т.п.)
+    async runPromptAsBot(prompt, opts = {}) {
+      if (!this.state.key) { this.openSettings(); return; }
+      this.open();
+      this.state.busy = true;
+      this._renderSuggestions();
+      this._render();
+      try {
+        const base = this._buildBasePrompt();
+        const sys = (typeof this.cfg.systemPrompt === 'function') ? this.cfg.systemPrompt() : this.cfg.systemPrompt;
+        const fullSystem = base
+          + '\n\n# ДОПОЛНИТЕЛЬНО ПРО ЭТОТ СЕРВИС\n' + (sys || '')
+          + (opts.systemAppend ? '\n\n' + opts.systemAppend : '');
+        const messages = [
+          { role: 'system', content: fullSystem },
+          { role: 'user', content: prompt }
+        ];
+        const reply = await callAI(this.state.key, messages);
+        const final = (reply && reply.trim()) ? this._processActions(reply) : '✅ Готово.';
+        this.state.messages.push({ role: 'user', text: opts.userLabel || 'Дайджест недели' });
+        this.state.messages.push({ role: 'assistant', text: final });
+      } catch (e) {
+        this.state.messages.push({ role: 'assistant', text: e.message, error: true });
+      }
+      this.state.busy = false;
+      this._render();
+      this._saveLocalHistory();
     },
 
     _render() {
@@ -524,10 +559,18 @@
       if (this.state.messages.length === 0) {
         const g = typeof this.cfg.greeting === 'function' ? this.cfg.greeting() : this.cfg.greeting;
         html += `<div class="ai-msg bot">${mdRender(g)}</div>`;
-        const hint = this.state.key
-          ? ''
-          : `<div class="ai-msg bot" style="opacity:.8"><b>⚙ Нужен API-ключ.</b> Жми шестерёнку наверху — там одной кнопкой получишь Mistral (бесплатно, работает в РБ/РФ).</div>`;
-        html += hint;
+        if (!this.state.key) {
+          const isEn = window.I18N && I18N.lang === 'en';
+          html += `<div class="ai-msg bot" style="background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(16,185,129,.08));border:1px solid var(--accent);padding:14px;border-radius:14px">
+            <div style="font-weight:800;font-size:14px;margin-bottom:6px">${isEn ? '🔑 One-time setup (2 minutes)' : '🔑 Однократная настройка (2 минуты)'}</div>
+            <div style="font-size:13px;line-height:1.55;margin-bottom:10px">${isEn
+              ? 'Get a free AI key on <b>Mistral</b> (no card, works in RU/BY). Done once — works in all 4 apps.'
+              : 'Получи бесплатный AI-ключ на <b>Mistral</b> (без карты, работает в РБ/РФ). Один раз — работает во всех 4 приложениях.'}</div>
+            <button id="ai-onb-go" style="background:var(--accent);color:var(--accent-text,#fff);border:none;padding:9px 16px;border-radius:99px;font-weight:800;cursor:pointer;font-family:inherit;font-size:13px">
+              ${isEn ? '🚀 Get the key' : '🚀 Получить ключ'}
+            </button>
+          </div>`;
+        }
       }
       this.state.messages.forEach(m => {
         if (m.error) {
@@ -544,6 +587,9 @@
       }
       body.innerHTML = html;
       body.scrollTop = body.scrollHeight;
+      // Подключаем CTA-кнопку онбординга на ключ
+      const onbBtn = document.getElementById('ai-onb-go');
+      if (onbBtn) onbBtn.onclick = () => this.openSettings();
     },
 
     _onSend() {
@@ -553,6 +599,69 @@
       ta.value = '';
       ta.style.height = 'auto';
       this._send(v);
+    },
+
+    _resolveUserName() {
+      try {
+        if (typeof this.cfg.getUserName === 'function') {
+          const v = this.cfg.getUserName();
+          if (v) return v;
+        }
+        const u = this.cfg.getUser?.();
+        if (u?.displayName) return u.displayName.split(/\s+/)[0];
+        if (u?.email) return u.email.split('@')[0];
+      } catch (e) {}
+      return '';
+    },
+
+    _resolveLang() {
+      if (window.I18N && I18N.lang === 'en') return 'en';
+      return 'ru';
+    },
+
+    _buildBasePrompt() {
+      const name = this._resolveUserName();
+      const lang = this._resolveLang();
+      if (lang === 'en') {
+        return `You are a friendly, warm, conversational AI assistant inside ${this.cfg.appName || 'this'} app — part of the user's personal dashboard.
+${name ? `The user's name is **${name}**. Address them by name naturally — not in every reply, but when it feels human (greetings, when the answer feels personal, when wrapping up).` : ''}
+
+## Tone & personality
+- Be a real friend, not a corporate bot. Warm, witty, supportive.
+- Match the user's energy — if they're casual, be casual; if they're stressed, be calm and reassuring.
+- Use a couple of emojis where natural, never spam them.
+- Be brief by default (2-5 sentences). Long answers only when the question really needs depth.
+- It's OK to disagree, to push back politely if their plan looks off, to suggest something better.
+
+## Small talk
+- If the user just says "how's it going / how are you / hi" — chat naturally. Reply something warm and human ("Pretty good — running fast as ever 💨. How about you, ${name || 'friend'}? What's the plan today?"). Don't lecture them about the app.
+- You can chit-chat about anything — weather, mood, music, what they're working on — within reason. You're a personal assistant, not just an FAQ bot.
+
+## When relevant, use app context
+- You have access to live data from this app (tasks/transactions/contacts/etc). Use it when the question touches it. Quote specifics (names, amounts, dates) instead of generalities.
+- If the question is general or off-topic from the app, just answer like a normal helpful AI.
+
+Reply in English.`;
+      }
+      return `Ты — дружелюбный, тёплый, живой AI-собеседник внутри приложения ${this.cfg.appName || ''} — часть личного дашборда пользователя.
+${name ? `Пользователя зовут **${name}**. Обращайся по имени естественно — не в каждом сообщении, а когда это уместно (приветствие, когда ответ личный, в конце мысли). Если уверен в склонении — склоняй (${name}, к ${name}у).` : ''}
+
+## Тон и характер
+- Будь настоящим другом, не корпоративным ботом. Тепло, с лёгким юмором, поддержка.
+- Подстраивайся под энергию: если человек расслабленный — расслабленно, если переживает — мягко и спокойно.
+- Эмодзи можно вставлять уместно (1-3 за ответ), не спамь.
+- По умолчанию отвечай коротко (2-5 предложений). Длинно — только когда вопрос реально требует глубины.
+- Можно мягко не соглашаться, предлагать альтернативу, если план человека выглядит сомнительно.
+
+## Small talk
+- Если человек просто пишет «как дела / привет / че там» — отвечай по-человечески. Без занудства про функционал. Например: «Да норм, бегаю по серверам как обычно 💨. У тебя как, ${name || 'друг'}? Что в планах сегодня?».
+- Можно болтать на любые темы в разумных пределах — погода, настроение, музыка, чем занимаешься. Ты живой помощник, а не FAQ.
+
+## Когда уместно — используй контекст приложения
+- У тебя есть свежие данные из этого приложения (задачи/транзакции/контакты и т.д.). Опирайся на них, когда вопрос их касается. Цитируй конкретику (названия, суммы, даты) вместо общих фраз.
+- Если вопрос общий или не про приложение — отвечай как обычный полезный AI.
+
+Отвечай по-русски.`;
     },
 
     async _send(userText) {
@@ -567,9 +676,12 @@
       this.state.busy = true;
       this._render();
       try {
+        const base = this._buildBasePrompt();
         const sys = (typeof this.cfg.systemPrompt === 'function') ? this.cfg.systemPrompt() : this.cfg.systemPrompt;
         const ctx = (typeof this.cfg.getContext === 'function') ? this.cfg.getContext() : (this.cfg.getContext || '');
-        const fullSystem = sys + (ctx ? `\n\n# КОНТЕКСТ ПРИЛОЖЕНИЯ\n${ctx}` : '');
+        const fullSystem = base
+          + '\n\n# ДОПОЛНИТЕЛЬНО ПРО ЭТОТ СЕРВИС\n' + (sys || '')
+          + (ctx ? `\n\n# ЖИВЫЕ ДАННЫЕ ЭТОГО ПРИЛОЖЕНИЯ\n${ctx}` : '');
         // Только непустые non-error сообщения уходят в API
         // (иначе Mistral/OpenAI ломаются на "Assistant message must have either content or tool_calls")
         const history = this.state.messages

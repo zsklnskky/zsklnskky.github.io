@@ -2,9 +2,18 @@
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>WALLET.</title>
 <link rel="icon" type="image/png" href="wallet-icon.png">
+<!-- ── PWA ── -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A1525">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WALLET">
+<link rel="apple-touch-icon" href="wallet-icon.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
+<script src="pwa-install.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- ── FIREBASE SDK (auth + firestore for cross-device sync) ── -->
@@ -1576,8 +1585,10 @@ html[data-theme="light"] .clock-widget { background: rgba(255,255,255,.65); }
     <div class="sidebar-foot">
       <a href="index.html" class="hub-back-btn" data-i18n-title="hub_btn.tip" title="К списку приложений">← Hub</a>
       <button class="btn btn-accent" data-action="open-add" data-i18n="add.tx">+ Добавить трату</button>
+      <button class="btn btn-ghost" data-action="ocr-receipt" data-i18n="ocr.btn">📸 Чек (AI распознает)</button>
       <button class="btn btn-ghost" data-action="open-stats" data-i18n="stats.btn">📊 Статистика и отчёты</button>
       <button class="btn btn-ghost" data-action="open-converter" data-i18n="conv.btn">💱 Конвертер валют</button>
+      <button class="btn btn-ghost" data-action="open-groups">👥 Группы (общие траты)</button>
       <div class="btn-row">
         <button class="btn btn-ghost" data-action="open-categories" data-i18n-title="cat.tip" title="Категории">📁</button>
         <button class="btn btn-ghost" data-action="open-settings" data-i18n-title="settings.tip" title="Настройки">⚙</button>
@@ -3404,8 +3415,322 @@ startClock();
 ensureRates();  /* fetch live BYN/USD/EUR rates on load (1h cache) + 30min auto-refresh */
 </script>
 
-<!-- ============ AI AGENT ============ -->
+<!-- ============ GROUP EXPENSES (Splitwise lite) ============ -->
+<div class="modal-backdrop" id="modal-groups">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-head">
+      <div class="modal-title">👥 Группы — общие траты</div>
+      <button class="modal-close" data-close>×</button>
+    </div>
+    <div class="modal-body" id="groups-body"></div>
+  </div>
+</div>
+<script>
+(function () {
+  function ensureGroups() { if (!Array.isArray(state.groups)) state.groups = []; }
+
+  function calcBalances(g) {
+    // На каждую трату: payer пополнил всем, среди splitAmong делится на N
+    // Сумма что КАЖДЫЙ должен payer'у считается + сворачивается
+    const owe = {}; // owe[a][b] = сколько a должен b
+    function add(a, b, amt) {
+      if (a === b || !amt) return;
+      owe[a] = owe[a] || {};
+      owe[a][b] = (owe[a][b] || 0) + amt;
+    }
+    (g.expenses || []).forEach(e => {
+      const N = (e.splitAmong || []).length;
+      if (!N) return;
+      const share = (+e.amount) / N;
+      e.splitAmong.forEach(person => {
+        if (person !== e.payer) add(person, e.payer, share);
+      });
+    });
+    // Сворачиваем встречные долги
+    const net = {};
+    Object.keys(owe).forEach(a => {
+      Object.keys(owe[a]).forEach(b => {
+        const ab = owe[a][b] || 0;
+        const ba = (owe[b] && owe[b][a]) || 0;
+        const diff = ab - ba;
+        if (diff > 0) (net[a] = net[a] || {})[b] = diff;
+      });
+    });
+    return net;
+  }
+
+  function renderGroupsList() {
+    ensureGroups();
+    const body = document.getElementById('groups-body');
+    let html = '';
+    if (!state.groups.length) {
+      html += '<div style="color:var(--text2);text-align:center;padding:20px;font-size:14px;line-height:1.6">Создай группу — например, «Поход в ресторан», «Поездка на море». Указывай участников, кто за что платил — а группа сама посчитает кто кому сколько должен.</div>';
+    } else {
+      html += state.groups.map(g => {
+        const total = (g.expenses || []).reduce((a,e) => a + (+e.amount||0), 0);
+        return `<div class="goal-card" style="cursor:pointer" data-open-group="${g.id}">
+          <div style="font-weight:800;font-size:15px">${esc(g.name)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px">
+            👥 ${(g.members||[]).length} участн. · 💸 ${(g.expenses||[]).length} трат · итого ${total.toFixed(2)} ${esc(g.currency||state.currency)}
+          </div>
+        </div>`;
+      }).join('');
+    }
+    html += `<div class="add-row-form" style="margin-top:14px">
+      <div class="add-row-form-row">
+        <input type="text" id="new-group-name" placeholder="Название группы (Ресторан / Поездка / Соседи)" maxlength="60">
+        <select id="new-group-cur" style="flex:0 0 96px">
+          <option value="BYN">BYN</option><option value="USD">USD</option><option value="EUR">EUR</option>
+        </select>
+      </div>
+      <input type="text" id="new-group-members" placeholder="Участники через запятую: Я, Маша, Антон">
+      <button id="add-group-btn">+ Создать группу</button>
+    </div>`;
+    body.innerHTML = html;
+
+    body.querySelectorAll('[data-open-group]').forEach(c => {
+      c.onclick = () => renderGroupDetail(c.dataset.openGroup);
+    });
+    document.getElementById('add-group-btn').onclick = () => {
+      const name = document.getElementById('new-group-name').value.trim();
+      const cur  = document.getElementById('new-group-cur').value;
+      const memStr = document.getElementById('new-group-members').value.trim();
+      const members = memStr.split(',').map(s => s.trim()).filter(Boolean);
+      if (!name || members.length < 2) { alert('Назови группу и добавь минимум 2 участников'); return; }
+      state.groups.push({
+        id: 'gr_' + Date.now() + '_' + Math.floor(Math.random()*999),
+        name, currency: cur,
+        members: members.map(m => ({ name: m })),
+        expenses: [],
+        createdAt: Date.now()
+      });
+      persist(); renderGroupsList();
+    };
+  }
+
+  function renderGroupDetail(id) {
+    const g = state.groups.find(x => x.id === id);
+    if (!g) return;
+    const body = document.getElementById('groups-body');
+    const cur = g.currency || state.currency;
+    const memNames = (g.members || []).map(m => m.name);
+    const balances = calcBalances(g);
+    const balLines = [];
+    Object.entries(balances).forEach(([a, bb]) => {
+      Object.entries(bb).forEach(([b, amt]) => {
+        balLines.push(`<div style="font-size:14px;padding:6px 0">↔ <strong>${esc(a)}</strong> должен <strong>${esc(b)}</strong>: <span style="color:#10B981;font-weight:800">${amt.toFixed(2)} ${cur}</span></div>`);
+      });
+    });
+
+    body.innerHTML = `
+      <button class="btn-ghost" id="back-to-groups" style="margin-bottom:12px">← К списку групп</button>
+      <div class="goal-card">
+        <div style="font-weight:800;font-size:16px">${esc(g.name)}</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">👥 ${memNames.join(', ')}</div>
+      </div>
+
+      <div style="margin-top:14px"><div style="font-weight:800;margin-bottom:8px">💰 Кто кому должен</div>
+        ${balLines.length ? balLines.join('') : '<div style="color:var(--text3);font-size:13px">Все в расчёте 🎉</div>'}
+      </div>
+
+      <div style="margin-top:18px"><div style="font-weight:800;margin-bottom:8px">📋 История трат</div>
+        ${(g.expenses||[]).length ? g.expenses.slice().reverse().map(e => `
+          <div class="goal-card" style="margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;font-size:14px">
+              <strong>${esc(e.note || 'Трата')}</strong>
+              <span>${(+e.amount).toFixed(2)} ${cur}</span>
+            </div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px">
+              Заплатил: <strong>${esc(e.payer)}</strong> · Поровну между: ${esc((e.splitAmong||[]).join(', '))}
+            </div>
+            <button class="goal-act-btn danger" data-del-expense="${e.id}" style="margin-top:6px">× Удалить</button>
+          </div>
+        `).join('') : '<div style="color:var(--text3);font-size:13px">Пока нет</div>'}
+      </div>
+
+      <div class="add-row-form" style="margin-top:14px">
+        <div style="font-weight:800">+ Новая трата</div>
+        <div class="add-row-form-row">
+          <input type="number" id="exp-amt" placeholder="Сумма" step="0.01" min="0">
+          <input type="text" id="exp-note" placeholder="За что (Пицца / Бензин / Гостиница)">
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Кто заплатил?</div>
+          <select id="exp-payer">${memNames.map(n => `<option>${esc(n)}</option>`).join('')}</select>
+        </div>
+        <div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Поделить между (галочки):</div>
+          <div id="exp-split">
+            ${memNames.map((n,i) => `<label style="display:inline-flex;gap:5px;align-items:center;margin-right:10px;font-size:13px"><input type="checkbox" data-split="${esc(n)}" checked>${esc(n)}</label>`).join('')}
+          </div>
+        </div>
+        <button id="add-expense-btn">+ Добавить</button>
+        <button class="btn-ghost" id="settle-group-btn" style="margin-top:6px">✓ Все рассчитались (стереть историю)</button>
+      </div>
+    `;
+
+    document.getElementById('back-to-groups').onclick = renderGroupsList;
+    body.querySelectorAll('[data-del-expense]').forEach(b => {
+      b.onclick = () => {
+        g.expenses = g.expenses.filter(e => e.id !== b.dataset.delExpense);
+        persist(); renderGroupDetail(id);
+      };
+    });
+    document.getElementById('add-expense-btn').onclick = () => {
+      const amt = parseFloat(document.getElementById('exp-amt').value);
+      const note = document.getElementById('exp-note').value.trim();
+      const payer = document.getElementById('exp-payer').value;
+      const split = Array.from(body.querySelectorAll('[data-split]')).filter(c => c.checked).map(c => c.dataset.split);
+      if (!amt || amt <= 0 || !split.length) { alert('Заполни сумму и выбери участников'); return; }
+      g.expenses.push({
+        id: 'ex_' + Date.now() + '_' + Math.floor(Math.random()*999),
+        amount: amt, note, payer, splitAmong: split, date: new Date().toISOString().slice(0,10)
+      });
+      persist(); renderGroupDetail(id);
+    };
+    document.getElementById('settle-group-btn').onclick = () => {
+      if (!confirm('Стереть всю историю трат группы? (Это значит, что все рассчитались)')) return;
+      g.expenses = []; persist(); renderGroupDetail(id);
+    };
+  }
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-action="open-groups"]')) {
+      ensureGroups();
+      document.getElementById('modal-groups').classList.add('open');
+      renderGroupsList();
+    }
+  });
+})();
+</script>
+<style>
+.goal-card { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; }
+.goal-card:hover { border-color: var(--border2); }
+.add-row-form { background: var(--s2); border: 1px dashed var(--border); border-radius: 14px; padding: 12px; display: grid; gap: 8px; }
+.add-row-form input, .add-row-form select { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 10px; font-family: inherit; font-size: 14px; outline: none; }
+.add-row-form input:focus { border-color: var(--accent); }
+.add-row-form-row { display: flex; gap: 8px; }
+.add-row-form-row > * { flex: 1; }
+.add-row-form button { background: var(--accent); color: var(--accent-text, #fff); border: none; padding: 10px; border-radius: 10px; font-weight: 800; cursor: pointer; font-family: inherit; }
+.goal-act-btn { background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 4px 9px; border-radius: 8px; font-size: 11px; cursor: pointer; font-family: inherit; }
+.goal-act-btn.danger:hover { border-color: var(--red); color: var(--red); }
+</style>
+
+<!-- ============ RECEIPT OCR ============ -->
+<input type="file" id="ocr-receipt-input" accept="image/*" capture="environment" hidden>
+<script>
+(function () {
+  const fileInput = document.getElementById('ocr-receipt-input');
+  if (!fileInput) return;
+
+  async function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(new Error('read failed'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function callMistralVision(key, dataUrl, prompt) {
+    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'pixtral-12b-2409',
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: prompt },
+            { type: 'image_url', image_url: dataUrl }
+          ]
+        }],
+        max_tokens: 500,
+        temperature: 0.2
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || err.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  async function recognizeReceipt(file) {
+    // Берём общий AI-ключ (если есть Mistral) — иначе говорим где взять
+    const key = (window.AIAgent?.state?.key || '').trim();
+    if (!key) {
+      alert('Сначала задай AI-ключ: жми 💬 → шестерёнка. Для OCR нужен Mistral (бесплатно).');
+      if (window.AIAgent) AIAgent.openSettings();
+      return;
+    }
+    if (window.AIAgent.detectProvider(key) !== 'mistral') {
+      if (!confirm('Сканер чеков работает только на Mistral-ключе. У тебя другой провайдер. Продолжить попытку?')) return;
+    }
+
+    const cats = (state.categories || []).filter(c => c.type === 'expense').map(c => c.name);
+    const prompt = `Это фотография чека или счёта. Извлеки данные и верни СТРОГО JSON, без преамбулы и без markdown:
+{
+  "amount": число (общая сумма) или null,
+  "currency": "BYN" | "USD" | "EUR" | null,
+  "date": "YYYY-MM-DD" или null,
+  "merchant": "название магазина/места" или null,
+  "category": одно из [${cats.map(c => `"${c}"`).join(', ')}] или "Прочее"
+}
+Если что-то не видно — ставь null. Без объяснений, только JSON.`;
+
+    // Прелоадер
+    const fab = document.querySelector('[data-action="ocr-receipt"]');
+    const oldText = fab?.textContent;
+    if (fab) { fab.textContent = '🤖 Распознаю чек...'; fab.disabled = true; }
+
+    try {
+      const dataUrl = await fileToBase64(file);
+      const text = await callMistralVision(key, dataUrl, prompt);
+      // Парсим JSON (модель иногда оборачивает в ```json...```)
+      const json = text.replace(/^[\s\S]*?(\{[\s\S]+\})[\s\S]*$/, '$1');
+      const r = JSON.parse(json);
+
+      // Заполняем форму
+      openAddModal();
+      addState.type = 'expense';
+      if (r.currency && CURRENCIES.find(c => c.code === r.currency)) addState.currency = r.currency;
+      const cat = (state.categories || []).find(c => c.type === 'expense' && c.name.toLowerCase() === String(r.category||'').toLowerCase());
+      if (cat) addState.categoryId = cat.id;
+      renderAddType(); renderTxCurTabs();
+
+      if (r.amount) document.getElementById('amount-input').value = r.amount;
+      if (r.date) document.getElementById('tx-date').value = r.date;
+      if (r.merchant) {
+        const note = document.getElementById('tx-note');
+        if (note) note.value = (r.merchant + (note.value ? ' · ' + note.value : '')).slice(0, 200);
+      }
+      toast('✅ Распознано! Проверь данные и жми «Сохранить».', 'success');
+    } catch (e) {
+      alert('Не удалось распознать чек: ' + e.message);
+    } finally {
+      if (fab) { fab.textContent = oldText; fab.disabled = false; }
+    }
+  }
+
+  fileInput.addEventListener('change', e => {
+    const f = e.target.files?.[0];
+    if (f) recognizeReceipt(f);
+    e.target.value = '';
+  });
+
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-action="ocr-receipt"]')) {
+      fileInput.click();
+    }
+  });
+})();
+</script>
+
+<!-- ============ AI AGENT + VOICE ============ -->
 <script src="ai-agent.js"></script>
+<script src="voice.js"></script>
 <script>
 (function () {
   function walletContextSnapshot() {
@@ -3496,6 +3821,7 @@ ensureRates();  /* fetch live BYN/USD/EUR rates on load (1h cache) + 30min auto-
     else setTimeout(tryInit, 100);
   }
   tryInit();
+  if (window.VoiceNotes) VoiceNotes.init();
 
   if (typeof auth !== 'undefined' && auth && auth.onAuthStateChanged) {
     auth.onAuthStateChanged(() => {
@@ -3511,6 +3837,7 @@ ensureRates();  /* fetch live BYN/USD/EUR rates on load (1h cache) + 30min auto-
   const WALLET_DICT = {
     'hub_btn.tip':     { ru: 'К списку приложений', en: 'Back to dashboard' },
     'add.tx':          { ru: '+ Добавить трату',  en: '+ Add expense' },
+    'ocr.btn':         { ru: '📸 Чек (AI распознает)', en: '📸 Receipt (AI scan)' },
     'period.label':    { ru: '📅 Период',         en: '📅 Period' },
     'period.today':    { ru: 'Сегодня',           en: 'Today' },
     'period.week':     { ru: 'Неделя',            en: 'Week' },

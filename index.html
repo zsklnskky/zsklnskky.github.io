@@ -2,9 +2,18 @@
 <html lang="ru" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Zahar · Dashboard</title>
 <link rel="icon" id="favicon" type="image/png" href="">
+<!-- ── PWA ── -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A1525">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ZAHAR.">
+<link rel="apple-touch-icon" href="focus-icon.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
+<script src="pwa-install.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <script>
 (function(){
@@ -32,6 +41,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script src="i18n.js"></script>
 <script src="ai-agent.js"></script>
+<script src="voice.js"></script>
+<script src="quick-capture.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyClulIxVgenMx1wj3F-s1XWPrNC5AUdn5M",
@@ -392,6 +403,239 @@ html[data-theme="light"] .soon-badge { color: #6D28D9; background: rgba(167,139,
 
 /* Unified rounded display font (matches ORBIT) */
 .hub-logo, .logo-text, .app-name, .user-name { font-family: 'Comfortaa', 'Nunito', sans-serif; letter-spacing: -.01em; }
+
+/* ── TODAY DASHBOARD CARDS ── */
+.today-wrap { max-width: 820px; margin: 0 auto 28px; text-align: left; }
+.today-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 12px; padding: 0 6px;
+}
+.today-title {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .15em;
+  text-transform: uppercase; font-weight: 800; color: var(--text2);
+}
+.today-refresh {
+  background: transparent; border: none; color: var(--text3);
+  font-size: 13px; cursor: pointer; font-family: inherit;
+}
+.today-refresh:hover { color: var(--accent); }
+
+.today-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.today-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 18px; padding: 16px 14px;
+  text-align: left; cursor: pointer;
+  transition: border-color .15s, transform .15s, box-shadow .18s;
+  display: flex; flex-direction: column; gap: 6px;
+  min-height: 120px;
+  position: relative; overflow: hidden;
+}
+.today-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.35); }
+.today-card-icon { font-size: 22px; line-height: 1; }
+.today-card-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; font-weight: 800; color: var(--text3);
+}
+.today-card-big {
+  font-size: 28px; font-weight: 900; color: var(--text);
+  line-height: 1; font-variant-numeric: tabular-nums;
+}
+.today-card-sub {
+  font-size: 12px; color: var(--text2); line-height: 1.35;
+  margin-top: auto;
+}
+.today-card-empty { color: var(--text3); font-style: italic; }
+.today-card.bdays    { border-left: 3px solid #FB7185; }
+.today-card.tasks    { border-left: 3px solid #3B82F6; }
+.today-card.spending { border-left: 3px solid #0EA5E9; }
+.today-card.streak   { border-left: 3px solid #F59E0B; }
+.today-loading { color: var(--text3); font-size: 13px; text-align: center; padding: 16px 0; }
+
+@media (max-width: 768px) {
+  .today-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .today-card { padding: 13px 12px; min-height: 100px; }
+  .today-card-big { font-size: 22px; }
+}
+@media (max-width: 400px) {
+  .today-grid { grid-template-columns: 1fr; }
+}
+
+/* ── CALENDAR CARD ── */
+.cal-wrap {
+  max-width: 820px; margin: 0 auto 28px;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 22px; padding: 18px 22px;
+  box-shadow: var(--shadow-card);
+}
+.cal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px;
+}
+.cal-title {
+  font-family: 'Comfortaa','Nunito',sans-serif;
+  font-size: 18px; font-weight: 900; color: var(--text);
+  letter-spacing: -.01em;
+}
+.cal-nav {
+  display: flex; gap: 6px; align-items: center;
+}
+.cal-nav-btn {
+  background: var(--s2); border: 1px solid var(--border);
+  color: var(--text2); width: 32px; height: 32px;
+  border-radius: 10px; cursor: pointer; font-size: 14px;
+  font-family: inherit; transition: all .12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.cal-today-btn {
+  background: var(--accent-grad); color: var(--accent-text);
+  border: none; padding: 6px 12px; border-radius: 10px;
+  font-family: inherit; font-size: 11px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+  transition: filter .12s;
+}
+.cal-today-btn:hover { filter: brightness(1.08); }
+
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-dow {
+  text-align: center; padding: 6px 2px;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .12em; text-transform: uppercase;
+  font-weight: 800; color: var(--text3);
+}
+.cal-dow.weekend { color: #FB7185; }
+.cal-day {
+  aspect-ratio: 1.4 / 1; min-height: 50px;
+  background: var(--bg2); border: 1px solid transparent;
+  border-radius: 10px; padding: 5px 6px;
+  cursor: pointer; position: relative;
+  display: flex; flex-direction: column;
+  transition: all .12s;
+}
+.cal-day:hover { border-color: var(--border2); background: var(--s2); }
+.cal-day.other-month { opacity: .35; }
+.cal-day.today { border-color: var(--accent); background: var(--accent-bg, rgba(56,189,248,.08)); }
+.cal-day.today .cal-day-num { color: var(--accent); font-weight: 900; }
+.cal-day.weekend .cal-day-num { color: #FB7185; }
+.cal-day-num { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1; }
+.cal-day-dots { display: flex; gap: 3px; margin-top: auto; flex-wrap: wrap; }
+.cal-day-dot {
+  width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+}
+.cal-day-dot.bday { background: #FB7185; box-shadow: 0 0 4px rgba(251,113,133,.5); }
+.cal-day-dot.task { background: #3B82F6; box-shadow: 0 0 4px rgba(59,130,246,.5); }
+.cal-day-dot.overdue { background: #F87171; box-shadow: 0 0 4px rgba(248,113,113,.6); }
+
+.cal-pop {
+  position: absolute; z-index: 5;
+  background: var(--s1); border: 1px solid var(--accent);
+  border-radius: 14px; padding: 12px 14px;
+  font-size: 12px; min-width: 200px; max-width: 280px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  pointer-events: none; opacity: 0;
+  transform: translateY(-4px); transition: opacity .15s, transform .15s;
+  text-align: left;
+}
+.cal-pop.show { opacity: 1; transform: translateY(0); }
+.cal-pop-date {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: .12em; text-transform: uppercase;
+  font-weight: 800; color: var(--text3); margin-bottom: 6px;
+}
+.cal-pop-line { padding: 3px 0; display: flex; gap: 6px; align-items: flex-start; }
+.cal-pop-line-icon { flex-shrink: 0; }
+.cal-pop-empty { color: var(--text3); font-style: italic; }
+
+.cal-legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text2);
+  align-items: center; justify-content: center;
+}
+.cal-legend-item { display: flex; gap: 5px; align-items: center; }
+
+@media (max-width: 768px) {
+  .cal-wrap { padding: 14px; }
+  .cal-day { min-height: 40px; padding: 3px 4px; aspect-ratio: 1.2 / 1; }
+  .cal-day-num { font-size: 11px; }
+  .cal-day-dot { width: 5px; height: 5px; }
+  .cal-title { font-size: 16px; }
+}
+
+/* ── Global Search ── */
+.global-search-wrap { max-width: 640px; margin: 0 auto 28px; position: relative; }
+.global-search-box {
+  width: 100%; padding: 16px 56px 16px 50px; box-sizing: border-box;
+  background: var(--s1); border: 1.5px solid var(--border);
+  border-radius: 22px; color: var(--text);
+  font-family: var(--font); font-size: 16px; outline: none;
+  transition: border-color .15s, box-shadow .2s;
+  box-shadow: var(--shadow-card);
+}
+.global-search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-shadow); }
+.global-search-box::placeholder { color: var(--text3); }
+.global-search-icon {
+  position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+  font-size: 20px; opacity: .8; pointer-events: none;
+}
+.global-search-clear {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: var(--s2); border: 1px solid var(--border); color: var(--text3);
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  font-size: 14px; font-family: inherit;
+}
+.global-search-clear.show { display: flex; }
+.global-search-clear:hover { color: var(--text); border-color: var(--accent); }
+.global-results {
+  max-width: 640px; margin: 0 auto 28px;
+  background: var(--s1); border: 1px solid var(--border); border-radius: 20px;
+  padding: 14px; box-shadow: var(--shadow-card);
+  display: none; text-align: left;
+}
+.global-results.show { display: block; animation: gsIn .25s ease-out; }
+@keyframes gsIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+.gs-section { margin-bottom: 12px; }
+.gs-section:last-child { margin-bottom: 0; }
+.gs-section-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 6px; margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; font-weight: 800; color: var(--text2);
+}
+.gs-section-link {
+  background: transparent; border: none; color: var(--accent);
+  font-family: inherit; font-size: 11px; font-weight: 800; cursor: pointer;
+  text-transform: none; letter-spacing: 0;
+}
+.gs-section-link:hover { text-decoration: underline; }
+.gs-item {
+  padding: 8px 10px; border-radius: 10px; cursor: pointer;
+  display: flex; gap: 10px; align-items: flex-start;
+  transition: background .15s;
+}
+.gs-item:hover { background: var(--s2); }
+.gs-item-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+.gs-item-text { flex: 1; min-width: 0; font-size: 14px; color: var(--text); line-height: 1.4; }
+.gs-item-meta { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.gs-item-hl { color: var(--accent); font-weight: 700; }
+.gs-empty { padding: 20px; text-align: center; color: var(--text3); font-size: 13px; }
+.gs-loading { padding: 20px; text-align: center; color: var(--text3); font-size: 13px; }
+
+@media (max-width: 768px) {
+  .global-search-box { padding: 13px 50px 13px 44px; font-size: 14px; }
+  .global-search-icon { left: 14px; font-size: 17px; }
+  .global-results { padding: 10px; }
+}
 </style>
 </head>
 <body>
@@ -438,7 +682,42 @@ const HUB_DICT = {
   'app.password.desc':  { ru: 'Менеджер паролей · zero-knowledge',   en: 'Password manager · zero-knowledge' },
   'app.password.desc_lock':{ ru: 'Менеджер паролей',                 en: 'Password manager' },
   'app.orbit.desc':     { ru: 'Близкие люди · дни рождения · ИИ-поздравления', en: 'People · birthdays · AI greetings' },
-  'app.orbit.desc_lock':{ ru: 'Близкие люди · напоминания',          en: 'People · reminders' }
+  'app.orbit.desc_lock':{ ru: 'Близкие люди · напоминания',          en: 'People · reminders' },
+
+  'hub.search.ph':      { ru: 'Поиск по всему — задачи, траты, контакты, заметки...', en: 'Search everything — tasks, expenses, contacts, notes...' },
+  'hub.search.clear':   { ru: 'Очистить', en: 'Clear' },
+  'hub.search.loading': { ru: 'Подгружаю данные...', en: 'Loading data...' },
+  'hub.search.empty':   { ru: 'Ничего не нашлось. Попробуй другие слова.', en: 'Nothing found. Try different words.' },
+  'hub.search.section.focus':    { ru: 'FOCUS · задачи и заметки', en: 'FOCUS · tasks & notes' },
+  'hub.search.section.wallet':   { ru: 'WALLET · транзакции',     en: 'WALLET · transactions' },
+  'hub.search.section.orbit':    { ru: 'ORBIT · контакты',        en: 'ORBIT · contacts' },
+  'hub.search.open_app':         { ru: 'Открыть →', en: 'Open →' },
+  'hub.search.password_hint':    { ru: '🔐 PASSWORD не ищется отсюда (zero-knowledge). Открой PASSWORD и используй поиск там.', en: '🔐 PASSWORD is not searched here (zero-knowledge). Open PASSWORD and search inside it.' },
+
+  'hub.today.title':    { ru: 'Сегодня в твоей орбите', en: 'Today in your orbit' },
+  'hub.today.refresh':  { ru: 'Обновить', en: 'Refresh' },
+  'hub.today.refresh_label': { ru: 'обновить', en: 'refresh' },
+  'hub.today.loading':  { ru: 'Подгружаю...', en: 'Loading...' },
+  'hub.today.bdays.label':    { ru: 'Ближайшие ДР', en: 'Upcoming birthdays' },
+  'hub.today.bdays.empty':    { ru: 'нет в ближайшие 30 дней', en: 'none in 30 days' },
+  'hub.today.tasks.label':    { ru: 'Задачи сегодня', en: 'Tasks today' },
+  'hub.today.tasks.empty':    { ru: 'пусто', en: 'clear' },
+  'hub.today.tasks.overdue':  { ru: 'просрочено', en: 'overdue' },
+  'hub.today.tasks.inprog':   { ru: 'в работе', en: 'in progress' },
+  'hub.today.tasks.plan':     { ru: 'в плане', en: 'in plan' },
+  'hub.today.spending.label': { ru: 'Расход за неделю', en: 'Week spending' },
+  'hub.today.spending.empty': { ru: 'нет данных', en: 'no data' },
+  'hub.today.streak.label':   { ru: 'Лучший streak', en: 'Best streak' },
+  'hub.today.streak.empty':   { ru: 'нет привычек', en: 'no habits' },
+  'hub.today.streak.days':    { ru: 'дней подряд', en: 'days in a row' },
+
+  'hub.cal.today':            { ru: 'Сегодня', en: 'Today' },
+  'hub.cal.prev':             { ru: 'Прошлый месяц', en: 'Previous month' },
+  'hub.cal.next':             { ru: 'Следующий месяц', en: 'Next month' },
+  'hub.cal.legend.bday':      { ru: 'дни рождения', en: 'birthdays' },
+  'hub.cal.legend.task':      { ru: 'задачи',       en: 'tasks' },
+  'hub.cal.legend.overdue':   { ru: 'просрочка',    en: 'overdue' },
+  'hub.cal.empty':            { ru: 'свободный день', en: 'free day' }
 };
 const T = (k, fb) => (window.I18N ? I18N.t(k, fb) : fb || k);
 
@@ -525,9 +804,43 @@ function render(user) {
           <div class="user-email">${esc(u.email || '')}</div>
         </div>
       </div>
+      <div class="today-wrap" id="today-wrap">
+        <div class="today-head">
+          <span class="today-title">${esc(T('hub.today.title'))}</span>
+          <button class="today-refresh" id="today-refresh" title="${esc(T('hub.today.refresh'))}">↻ ${esc(T('hub.today.refresh_label'))}</button>
+        </div>
+        <div class="today-grid" id="today-grid">
+          <div class="today-loading">⏳ ${esc(T('hub.today.loading'))}</div>
+        </div>
+      </div>
+      <div class="cal-wrap" id="cal-wrap">
+        <div class="cal-head">
+          <div class="cal-title" id="cal-title">—</div>
+          <div class="cal-nav">
+            <button class="cal-today-btn" id="cal-today-btn">${esc(T('hub.cal.today'))}</button>
+            <button class="cal-nav-btn" id="cal-prev" title="${esc(T('hub.cal.prev'))}">←</button>
+            <button class="cal-nav-btn" id="cal-next" title="${esc(T('hub.cal.next'))}">→</button>
+          </div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-legend">
+          <span class="cal-legend-item"><span class="cal-day-dot bday"></span>${esc(T('hub.cal.legend.bday'))}</span>
+          <span class="cal-legend-item"><span class="cal-day-dot task"></span>${esc(T('hub.cal.legend.task'))}</span>
+          <span class="cal-legend-item"><span class="cal-day-dot overdue"></span>${esc(T('hub.cal.legend.overdue'))}</span>
+        </div>
+      </div>
+      <div class="global-search-wrap">
+        <span class="global-search-icon">🔍</span>
+        <input type="text" class="global-search-box" id="global-search-box" placeholder="${esc(T('hub.search.ph'))}" autocomplete="off" spellcheck="false">
+        <button class="global-search-clear" id="global-search-clear" title="${esc(T('hub.search.clear'))}">×</button>
+      </div>
+      <div class="global-results" id="global-results"></div>
       <div class="hub-apps">${appCards(true)}</div>
       <button class="signout-btn" id="signout-btn">${esc(T('hub.signout'))}</button>
     `;
+    wireGlobalSearch();
+    renderTodayDashboard();
+    refreshCalendar();
     document.getElementById('signout-btn').addEventListener('click', () => {
       if (confirm(T('hub.signout_confirm'))) auth.signOut();
     });
@@ -579,20 +892,112 @@ if (auth) {
 }
 
 /* ============ AI-МЕНЕДЖЕР HUB ============
-   Объясняет, что делает каждое из 4 приложений. Общий ключ — settings/{uid}. */
+   Объясняет, что делает каждое из 4 приложений + дайджест недели. */
 let _hubUser = null;
+
+async function fetchWeeklyContext() {
+  if (!_hubUser) return '';
+  const db = _hubDb();
+  if (!db) return '';
+  const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+  try {
+    const [focusDoc, walletDoc, orbitDoc] = await Promise.all([
+      db.collection('users').doc(_hubUser.uid).get().catch(() => null),
+      db.collection('wallets').doc(_hubUser.uid).get().catch(() => null),
+      db.collection('orbits').doc(_hubUser.uid).get().catch(() => null)
+    ]);
+    const parts = [];
+    // FOCUS
+    if (focusDoc?.exists) {
+      const s = focusDoc.data().state || {};
+      const allTasks = (s.projects || []).flatMap(p => (p.tasks || []).map(t => ({...t, _proj: p.name})));
+      const doneWeek = allTasks.filter(t => t.completedAt && t.completedAt >= weekAgo);
+      const todoNow  = allTasks.filter(t => t.status !== 'done');
+      parts.push(`FOCUS:
+- Закрыто задач за 7 дней: ${doneWeek.length}
+- Открытых сейчас: ${todoNow.length}
+- Топ-проекты: ${(s.projects || []).slice(0,5).map(p => p.name).join(', ') || '—'}
+${doneWeek.length ? '- Что закрыл: ' + doneWeek.slice(0,8).map(t => t.text).join(' / ') : ''}`);
+    }
+    // WALLET
+    if (walletDoc?.exists) {
+      const s = walletDoc.data().state || {};
+      const cur = s.currency || 'BYN';
+      const weekTxs = (s.transactions || []).filter(t => new Date(t.date).getTime() >= weekAgo);
+      const inc = weekTxs.filter(t => t.type === 'income').reduce((a,t) => a + (+t.amount||0), 0);
+      const exp = weekTxs.filter(t => t.type === 'expense').reduce((a,t) => a + (+t.amount||0), 0);
+      const byCat = {};
+      weekTxs.filter(t => t.type === 'expense').forEach(t => {
+        const cat = (s.categories || []).find(c => c.id === t.categoryId);
+        const n = cat ? cat.name : 'Без категории';
+        byCat[n] = (byCat[n] || 0) + (+t.amount||0);
+      });
+      const topCats = Object.entries(byCat).sort((a,b) => b[1]-a[1]).slice(0,5);
+      parts.push(`WALLET (${cur}):
+- Доход за 7 дней: ${inc.toFixed(2)}
+- Расход за 7 дней: ${exp.toFixed(2)}
+- Чистая разница: ${(inc-exp).toFixed(2)}
+- Транзакций: ${weekTxs.length}
+- Топ-категории: ${topCats.map(([n,v]) => `${n} ${v.toFixed(0)}`).join(' / ') || '—'}`);
+    }
+    // ORBIT
+    if (orbitDoc?.exists) {
+      const s = orbitDoc.data().state || {};
+      const contacts = (s.contacts || []);
+      const todayMD = (() => { const d = new Date(); return `${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+      const upcomingBdays = contacts.filter(c => {
+        if (!c.birthday) return false;
+        const b = c.birthday.split('-');
+        const md = b.length === 3 ? `${b[1]}-${b[2]}` : (b.length === 2 ? `${b[0]}-${b[1]}` : '');
+        if (!md) return false;
+        const now = new Date();
+        let target = new Date(now.getFullYear(), parseInt(md.split('-')[0])-1, parseInt(md.split('-')[1]));
+        if (target < now) target = new Date(now.getFullYear()+1, parseInt(md.split('-')[0])-1, parseInt(md.split('-')[1]));
+        const days = Math.round((target - now) / (1000*60*60*24));
+        return days >= 0 && days <= 14;
+      });
+      parts.push(`ORBIT:
+- Всего контактов: ${contacts.length}
+- ДР в ближайшие 14 дней: ${upcomingBdays.length}
+${upcomingBdays.length ? '  • ' + upcomingBdays.slice(0,5).map(c => c.name).join(', ') : ''}`);
+    }
+    return parts.join('\n\n');
+  } catch (e) {
+    console.warn('fetchWeeklyContext failed:', e);
+    return '';
+  }
+}
+
+async function runWeeklyDigest() {
+  if (!window.AIAgent) return;
+  if (!_hubUser) { alert('Сначала войди через Google.'); return; }
+  if (!AIAgent.state.key) { AIAgent.openSettings(); return; }
+  AIAgent.open();
+  const ctx = await fetchWeeklyContext();
+  const prompt = `Сделай яркий, человечный дайджест моей недели на основе данных ниже. Структура:
+1) 🎯 Главное за неделю (3-5 пунктов)
+2) 📈 Тренд (что лучше, что хуже vs обычно)
+3) 💡 Один конкретный совет на следующую неделю
+
+Пиши по-русски, кратко, с эмодзи. Без штампов.
+
+ДАННЫЕ:
+${ctx || '(данные не подтянулись — попробуй из конкретного приложения)'}`;
+  await AIAgent.runPromptAsBot(prompt, { userLabel: '🗓 Сделай дайджест моей недели' });
+}
+
 function initHubAgent() {
   if (!window.AIAgent) return;
   AIAgent.init({
     appKey: 'hub',
     appName: 'DASHBOARD',
     title: 'AI · Менеджер',
-    subtitle: 'Расскажет про каждый сервис',
-    greeting: () => 'Привет! Я помогу разобраться, что делает каждый сервис у тебя в дашборде. Спроси про любой — расскажу простыми словами, для чего он и как лучше пользоваться. 🚀',
+    subtitle: 'Расскажет про сервисы + дайджест недели',
+    greeting: () => 'Привет! Я помогу разобраться, что делает каждый сервис у тебя в дашборде, и могу собрать **дайджест недели** по всем 4 приложениям. Спроси про любой сервис или жми «🗓 Дайджест недели». 🚀',
     suggestions: [
+      { text: '🗓 Дайджест моей недели', onClick: () => runWeeklyDigest() },
       { text: '🎯 Что такое FOCUS?',     send: 'Расскажи простым языком, что такое FOCUS, для чего он и как им пользоваться.' },
       { text: '💰 Что такое WALLET?',    send: 'Расскажи простым языком, что такое WALLET, для чего он и как им пользоваться.' },
-      { text: '🔐 Что такое PASSWORD?',  send: 'Расскажи простым языком, что такое PASSWORD, что значит "zero-knowledge" и почему это безопасно.' },
       { text: '🪐 Что такое ORBIT?',     send: 'Расскажи простым языком, что такое ORBIT, для чего он и как им пользоваться.' }
     ],
     systemPrompt: () => `Ты — встроенный AI-менеджер на главной странице личного дашборда. Твоя задача — простыми, понятными словами рассказывать пользователю, что делает каждый из четырёх сервисов и как ими пользоваться. Отвечай по-русски, дружелюбно, кратко (3-6 предложений), с уместными эмодзи. Если спрашивают «что такое X» — описывай функционал X с примерами реального использования.
@@ -642,9 +1047,497 @@ function tryInitHubAgent() {
   else setTimeout(tryInitHubAgent, 100);
 }
 tryInitHubAgent();
+if (window.VoiceNotes) VoiceNotes.init();
+
+// AI Quick Capture — единая «✨» кнопка
+function tryInitQC() {
+  if (window.QuickCapture) {
+    QuickCapture.init({
+      getDb: _hubDb,
+      getUser: () => _hubUser,
+      getAIKey: () => (window.AIAgent?.state?.key || '')
+    });
+  } else setTimeout(tryInitQC, 100);
+}
+tryInitQC();
 
 if (auth) {
   auth.onAuthStateChanged(u => { _hubUser = u; if (window.AIAgent?.cfg) AIAgent.refresh(); });
+}
+
+/* ============ GLOBAL SEARCH ============
+   Тянет state из всех 3 «открытых» коллекций (FOCUS/WALLET/ORBIT)
+   и ищет client-side. PASSWORD не лезет — zero-knowledge. */
+let _gsCache = null;          // { ts, focus, wallet, orbit }
+let _gsTimer = null;
+const GS_CACHE_TTL = 60 * 1000;
+
+async function loadGlobalSearchState(force) {
+  if (!_hubUser) return null;
+  if (!force && _gsCache && (Date.now() - _gsCache.ts) < GS_CACHE_TTL) return _gsCache;
+  const db = _hubDb();
+  if (!db) return null;
+  try {
+    const [focusD, walletD, orbitD] = await Promise.all([
+      db.collection('users').doc(_hubUser.uid).get().catch(() => null),
+      db.collection('wallets').doc(_hubUser.uid).get().catch(() => null),
+      db.collection('orbits').doc(_hubUser.uid).get().catch(() => null)
+    ]);
+    _gsCache = {
+      ts: Date.now(),
+      focus:  focusD?.data()?.state || {},
+      wallet: walletD?.data()?.state || {},
+      orbit:  orbitD?.data()?.state || {}
+    };
+    return _gsCache;
+  } catch (e) { console.warn('GS load', e); return null; }
+}
+
+function gsHighlight(text, q) {
+  if (!text || !q) return esc(text || '');
+  const t = String(text);
+  const i = t.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return esc(t);
+  return esc(t.slice(0, i)) + '<span class="gs-item-hl">' + esc(t.slice(i, i + q.length)) + '</span>' + esc(t.slice(i + q.length));
+}
+
+function gsSearch(q, data) {
+  const lower = q.toLowerCase().trim();
+  if (!lower) return null;
+  const res = { focus: [], wallet: [], orbit: [] };
+
+  // FOCUS — задачи + проекты + заметки
+  (data.focus.projects || []).forEach(p => {
+    if ((p.name || '').toLowerCase().includes(lower)) {
+      res.focus.push({ icon: '📁', title: p.name, meta: 'Проект · ' + ((p.tasks||[]).length) + ' задач', _href: 'focus.html' });
+    }
+    (p.tasks || []).forEach(tk => {
+      if ((tk.text || '').toLowerCase().includes(lower)) {
+        res.focus.push({ icon: tk.status === 'done' ? '✅' : (tk.status === 'progress' ? '⚡' : '◯'), title: tk.text, meta: p.name + ' · ' + (tk.status === 'done' ? 'готово' : tk.status === 'progress' ? 'в работе' : 'план'), _href: 'focus.html' });
+      }
+    });
+  });
+  (data.focus.notesPages || []).forEach((np, idx) => {
+    if ((np.content || '').toLowerCase().includes(lower)) {
+      const snippet = np.content.slice(Math.max(0, np.content.toLowerCase().indexOf(lower) - 20), np.content.toLowerCase().indexOf(lower) + 80);
+      res.focus.push({ icon: '📝', title: snippet, meta: 'Заметка стр. ' + (idx + 1), _href: 'focus.html' });
+    }
+  });
+  (data.focus.habits || []).forEach(h => {
+    if ((h.name || '').toLowerCase().includes(lower)) {
+      res.focus.push({ icon: h.icon || '🔥', title: h.name, meta: 'Привычка', _href: 'focus.html' });
+    }
+  });
+  (data.focus.goals || []).forEach(g => {
+    if ((g.title || '').toLowerCase().includes(lower)) {
+      res.focus.push({ icon: g.icon || '🎯', title: g.title, meta: 'Цель · ' + (g.current||0) + '/' + (g.target||0), _href: 'focus.html' });
+    }
+  });
+
+  // WALLET — транзакции + категории
+  (data.wallet.transactions || []).forEach(tx => {
+    const note = tx.note || '';
+    const cat = (data.wallet.categories || []).find(c => c.id === tx.categoryId);
+    const catName = cat?.name || '';
+    if (note.toLowerCase().includes(lower) || catName.toLowerCase().includes(lower)) {
+      res.wallet.push({
+        icon: tx.type === 'income' ? '💰' : '💸',
+        title: (note || catName || 'Транзакция') + ' · ' + tx.amount + ' ' + (tx.currency || ''),
+        meta: (tx.date || '').slice(0,10) + (catName ? ' · ' + catName : ''),
+        _href: 'wallet.html'
+      });
+    }
+  });
+
+  // ORBIT — контакты
+  (data.orbit.contacts || []).forEach(c => {
+    const fields = [c.name, c.occupation, c.location, c.notes, (c.interests||[]).join(' ')].join(' ').toLowerCase();
+    if (fields.includes(lower)) {
+      res.orbit.push({
+        icon: '👤', title: c.name, meta: [c.occupation, c.location].filter(Boolean).join(' · ') || 'Контакт',
+        _href: 'orbit.html'
+      });
+    }
+  });
+  // Вишлист
+  ((data.orbit.wishlist?.items) || []).forEach(it => {
+    if ((it.title || '').toLowerCase().includes(lower)) {
+      res.orbit.push({ icon: '💝', title: it.title, meta: 'Вишлист · приоритет ' + (it.priority || 3), _href: 'orbit.html' });
+    }
+  });
+
+  // Подсветка совпадений
+  ['focus','wallet','orbit'].forEach(k => {
+    res[k] = res[k].slice(0, 8).map(item => ({ ...item, titleHl: gsHighlight(item.title, q) }));
+  });
+  return res;
+}
+
+/* ============ CALENDAR CARD ============ */
+let _calMonth = null; // null = current, иначе Date с 1-м числом
+function _ymKey(d) { return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+
+function buildCalendarEvents(data) {
+  // Возвращает map: 'YYYY-MM-DD' → { bday: [names], task: [titles], overdue: count }
+  const map = {};
+  const add = (k, type, item) => {
+    if (!map[k]) map[k] = { bday: [], task: [], overdue: [] };
+    map[k][type].push(item);
+  };
+
+  // ДР — берём текущий год и следующий
+  const yearNow = new Date().getFullYear();
+  (data.orbit?.contacts || []).forEach(c => {
+    if (!c.birthday) return;
+    const parts = String(c.birthday).split('-');
+    if (parts.length < 2) return;
+    const m = +parts[parts.length - 2];
+    const d = +parts[parts.length - 1];
+    if (!m || !d) return;
+    [yearNow, yearNow + 1].forEach(y => {
+      const k = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      add(k, 'bday', c.name);
+    });
+  });
+
+  // Задачи с дедлайнами
+  const todayKey = _todayKey();
+  ((data.focus?.projects || [])).forEach(p => {
+    (p.tasks || []).forEach(t => {
+      if (!t.dueDate || t.status === 'done') return;
+      const k = String(t.dueDate).slice(0, 10);
+      const overdue = k < todayKey;
+      add(k, overdue ? 'overdue' : 'task', t.text);
+    });
+  });
+
+  return map;
+}
+
+function renderCalendar() {
+  const titleEl = document.getElementById('cal-title');
+  const gridEl = document.getElementById('cal-grid');
+  if (!titleEl || !gridEl) return;
+  const now = new Date();
+  const month = _calMonth || new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthNames = (window.I18N && I18N.lang === 'en')
+    ? ['January','February','March','April','May','June','July','August','September','October','November','December']
+    : ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  titleEl.textContent = monthNames[month.getMonth()] + ' ' + month.getFullYear();
+
+  const dowNames = (window.I18N && I18N.lang === 'en')
+    ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    : ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+  const events = _gsCache ? buildCalendarEvents(_gsCache) : {};
+
+  // Первый день месяца, день недели (с понедельника)
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  let firstDow = first.getDay(); // 0=вс
+  firstDow = firstDow === 0 ? 6 : firstDow - 1; // 0=пн
+
+  // Кол-во дней в месяце
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  // Сколько дней показать с прошлого месяца
+  const prevDays = firstDow;
+  const totalCells = Math.ceil((prevDays + daysInMonth) / 7) * 7;
+
+  let html = dowNames.map((n, i) => `<div class="cal-dow ${i >= 5 ? 'weekend' : ''}">${esc(n)}</div>`).join('');
+
+  for (let i = 0; i < totalCells; i++) {
+    const offset = i - prevDays; // 0 = 1-е текущего месяца
+    const cellDate = new Date(month.getFullYear(), month.getMonth(), offset + 1);
+    const otherMonth = cellDate.getMonth() !== month.getMonth();
+    const dow = cellDate.getDay() === 0 ? 6 : cellDate.getDay() - 1;
+    const isWeekend = dow >= 5;
+    const k = `${cellDate.getFullYear()}-${String(cellDate.getMonth()+1).padStart(2,'0')}-${String(cellDate.getDate()).padStart(2,'0')}`;
+    const isToday = k === _todayKey();
+    const ev = events[k];
+
+    let dots = '';
+    if (ev) {
+      const limit = 3;
+      const arr = [];
+      if (ev.bday.length)    arr.push(...new Array(Math.min(limit, ev.bday.length)).fill('<span class="cal-day-dot bday"></span>'));
+      if (ev.task.length)    arr.push(...new Array(Math.min(limit, ev.task.length)).fill('<span class="cal-day-dot task"></span>'));
+      if (ev.overdue.length) arr.push(...new Array(Math.min(limit, ev.overdue.length)).fill('<span class="cal-day-dot overdue"></span>'));
+      dots = arr.slice(0, 4).join('');
+    }
+
+    html += `<div class="cal-day ${otherMonth ? 'other-month' : ''} ${isWeekend ? 'weekend' : ''} ${isToday ? 'today' : ''}" data-cal-day="${k}">
+      <div class="cal-day-num">${cellDate.getDate()}</div>
+      <div class="cal-day-dots">${dots}</div>
+    </div>`;
+  }
+
+  gridEl.innerHTML = html;
+
+  // Tooltip-popup на hover/tap
+  let popEl = null;
+  gridEl.querySelectorAll('[data-cal-day]').forEach(cell => {
+    cell.addEventListener('mouseenter', e => showPop(cell, cell.dataset.calDay, events));
+    cell.addEventListener('mouseleave', hidePop);
+    cell.addEventListener('click', e => {
+      // Перенаправляем в соответствующий апп
+      const ev = events[cell.dataset.calDay];
+      if (!ev) return;
+      if (ev.bday.length) window.location.href = 'orbit.html';
+      else if (ev.task.length || ev.overdue.length) window.location.href = 'focus.html';
+    });
+  });
+
+  function showPop(cell, dayKey, evMap) {
+    hidePop();
+    const ev = evMap[dayKey];
+    popEl = document.createElement('div');
+    popEl.className = 'cal-pop';
+    let body = '';
+    if (!ev) {
+      body = `<div class="cal-pop-empty">${esc(T('hub.cal.empty'))}</div>`;
+    } else {
+      if (ev.bday.length)    ev.bday.forEach(n    => body += `<div class="cal-pop-line"><span class="cal-pop-line-icon">🎂</span><span>${esc(n)}</span></div>`);
+      if (ev.task.length)    ev.task.forEach(t    => body += `<div class="cal-pop-line"><span class="cal-pop-line-icon">✅</span><span>${esc(t)}</span></div>`);
+      if (ev.overdue.length) ev.overdue.forEach(t => body += `<div class="cal-pop-line"><span class="cal-pop-line-icon" style="color:#F87171">⚠</span><span>${esc(t)}</span></div>`);
+    }
+    const parts = dayKey.split('-');
+    popEl.innerHTML = `<div class="cal-pop-date">${parts[2]}.${parts[1]}.${parts[0]}</div>${body}`;
+    document.body.appendChild(popEl);
+    const r = cell.getBoundingClientRect();
+    popEl.style.left = Math.min(window.innerWidth - 300, Math.max(8, r.left)) + 'px';
+    popEl.style.top  = (r.bottom + window.scrollY + 6) + 'px';
+    requestAnimationFrame(() => popEl?.classList.add('show'));
+  }
+  function hidePop() {
+    if (popEl) { popEl.remove(); popEl = null; }
+  }
+
+  document.getElementById('cal-today-btn').onclick = () => { _calMonth = null; renderCalendar(); };
+  document.getElementById('cal-prev').onclick = () => {
+    const m = _calMonth || new Date(now.getFullYear(), now.getMonth(), 1);
+    _calMonth = new Date(m.getFullYear(), m.getMonth() - 1, 1);
+    renderCalendar();
+  };
+  document.getElementById('cal-next').onclick = () => {
+    const m = _calMonth || new Date(now.getFullYear(), now.getMonth(), 1);
+    _calMonth = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+    renderCalendar();
+  };
+}
+
+async function refreshCalendar() {
+  if (!_hubUser) return;
+  if (!_gsCache) await loadGlobalSearchState();
+  renderCalendar();
+}
+
+/* ============ TODAY DASHBOARD ============ */
+function _todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function _parseBday(b) {
+  if (!b) return null;
+  const p = String(b).split('-');
+  if (p.length === 3) return { year: +p[0], month: +p[1], day: +p[2] };
+  if (p.length === 2) return { year: null, month: +p[0], day: +p[1] };
+  return null;
+}
+function _daysUntilBday(b) {
+  const p = _parseBday(b);
+  if (!p) return null;
+  const now = new Date();
+  let t = new Date(now.getFullYear(), p.month - 1, p.day);
+  if (t < new Date(now.getFullYear(), now.getMonth(), now.getDate())) {
+    t = new Date(now.getFullYear() + 1, p.month - 1, p.day);
+  }
+  return Math.round((t - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / (1000*60*60*24));
+}
+
+function calcTodayMetrics(data) {
+  const fdata = data.focus || {};
+  const wdata = data.wallet || {};
+  const odata = data.orbit || {};
+
+  // 🎂 Ближайшие ДР (≤ 30 дней)
+  const contacts = (odata.contacts || []).filter(c => c.birthday);
+  const upcoming = contacts.map(c => ({ name: c.name, days: _daysUntilBday(c.birthday) }))
+    .filter(x => x.days != null && x.days >= 0 && x.days <= 30)
+    .sort((a,b) => a.days - b.days);
+
+  // ✅ Задачи на сегодня + просроченные
+  const tk = _todayKey();
+  const allTasks = (fdata.projects || []).flatMap(p => p.tasks || []);
+  const todayTasks = allTasks.filter(t => t.dueDate && String(t.dueDate).slice(0,10) === tk && t.status !== 'done');
+  const overdueTasks = allTasks.filter(t => t.dueDate && String(t.dueDate).slice(0,10) < tk && t.status !== 'done');
+  const inProgTasks = allTasks.filter(t => t.status === 'progress');
+  const planTasks = allTasks.filter(t => t.status === 'plan');
+
+  // 💸 Траты за неделю в основной валюте
+  const cur = wdata.currency || 'BYN';
+  const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+  const weekExp = (wdata.transactions || [])
+    .filter(t => t.type === 'expense' && new Date(t.date).getTime() >= weekAgo)
+    .reduce((sum, t) => {
+      // Без курсов конвертация невозможна, считаем в исходной валюте
+      if ((t.currency || cur) === cur) return sum + (+t.amount || 0);
+      return sum; // прочие валюты пропускаем для простоты
+    }, 0);
+
+  // 🔥 Лучший streak среди привычек
+  const habits = fdata.habits || [];
+  function streak(h) {
+    let s = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      if (h.log && h.log[k]) s++;
+      else if (i === 0) continue;
+      else break;
+    }
+    return s;
+  }
+  const bestStreak = habits.length ? habits.map(h => ({ name: h.name, icon: h.icon || '🔥', s: streak(h) })).sort((a,b) => b.s - a.s)[0] : null;
+
+  return {
+    bdays: { upcoming, count: upcoming.length, next: upcoming[0] || null },
+    tasks: { today: todayTasks.length, overdue: overdueTasks.length, inProg: inProgTasks.length, plan: planTasks.length },
+    spending: { sum: weekExp, currency: cur },
+    streak: bestStreak
+  };
+}
+
+function renderTodayCards(m) {
+  const g = document.getElementById('today-grid');
+  if (!g) return;
+  const card = (cls, icon, label, big, sub, href) => `
+    <div class="today-card ${cls}" data-href="${esc(href)}">
+      <div class="today-card-icon">${icon}</div>
+      <div class="today-card-label">${esc(label)}</div>
+      <div class="today-card-big">${big}</div>
+      <div class="today-card-sub">${sub}</div>
+    </div>`;
+
+  // 🎂 BDAYS
+  const bdaysCard = card('bdays', '🎂', T('hub.today.bdays.label'),
+    m.bdays.count || '0',
+    m.bdays.next
+      ? `${esc(m.bdays.next.name)} — ${m.bdays.next.days === 0 ? '🎉 сегодня' : m.bdays.next.days === 1 ? 'завтра' : 'через ' + m.bdays.next.days + 'д'}`
+      : `<span class="today-card-empty">${esc(T('hub.today.bdays.empty'))}</span>`,
+    'orbit.html');
+
+  // ✅ TASKS
+  const tParts = [];
+  if (m.tasks.today)   tParts.push(`<strong>${m.tasks.today}</strong> ${esc(T('hub.today.tasks.label').toLowerCase())}`);
+  if (m.tasks.overdue) tParts.push(`<span style="color:#F87171"><strong>${m.tasks.overdue}</strong> ${esc(T('hub.today.tasks.overdue'))}</span>`);
+  if (m.tasks.inProg && !m.tasks.today) tParts.push(`${m.tasks.inProg} ${esc(T('hub.today.tasks.inprog'))}`);
+  if (m.tasks.plan && !m.tasks.today && !m.tasks.inProg) tParts.push(`${m.tasks.plan} ${esc(T('hub.today.tasks.plan'))}`);
+  const tasksBig = m.tasks.today || m.tasks.overdue || (m.tasks.inProg + m.tasks.plan) || 0;
+  const tasksCard = card('tasks', '✅', T('hub.today.tasks.label'),
+    tasksBig,
+    tParts.length ? tParts.join(' · ') : `<span class="today-card-empty">${esc(T('hub.today.tasks.empty'))}</span>`,
+    'focus.html');
+
+  // 💸 SPENDING
+  const spent = m.spending.sum;
+  const spentStr = spent ? spent.toLocaleString('ru-RU', { maximumFractionDigits: 0 }) : '0';
+  const spendCard = card('spending', '💸', T('hub.today.spending.label'),
+    spentStr,
+    spent
+      ? esc(m.spending.currency) + ' · ' + (T('hub.today.spending.label').toLowerCase())
+      : `<span class="today-card-empty">${esc(T('hub.today.spending.empty'))}</span>`,
+    'wallet.html');
+
+  // 🔥 STREAK
+  const streakCard = card('streak', '🔥', T('hub.today.streak.label'),
+    m.streak ? m.streak.s : 0,
+    m.streak
+      ? esc(m.streak.icon) + ' ' + esc(m.streak.name) + ' · ' + esc(T('hub.today.streak.days'))
+      : `<span class="today-card-empty">${esc(T('hub.today.streak.empty'))}</span>`,
+    'focus.html');
+
+  g.innerHTML = bdaysCard + tasksCard + spendCard + streakCard;
+  g.querySelectorAll('[data-href]').forEach(el => {
+    el.onclick = () => window.location.href = el.dataset.href;
+  });
+}
+
+async function renderTodayDashboard(force) {
+  const g = document.getElementById('today-grid');
+  if (!g) return;
+  if (!_hubUser) { g.innerHTML = ''; return; }
+  if (force) g.innerHTML = `<div class="today-loading">⏳ ${esc(T('hub.today.loading'))}</div>`;
+  const data = await loadGlobalSearchState(force);
+  if (!data) { g.innerHTML = `<div class="today-loading">⏳ ${esc(T('hub.today.loading'))}</div>`; return; }
+  const m = calcTodayMetrics(data);
+  renderTodayCards(m);
+  const refresh = document.getElementById('today-refresh');
+  if (refresh) refresh.onclick = () => renderTodayDashboard(true);
+}
+
+function wireGlobalSearch() {
+  const box = document.getElementById('global-search-box');
+  const clear = document.getElementById('global-search-clear');
+  const results = document.getElementById('global-results');
+  if (!box) return;
+
+  function hide() { results.classList.remove('show'); clear.classList.remove('show'); }
+  function show() { results.classList.add('show'); }
+
+  async function run(q) {
+    if (!q.trim()) { hide(); return; }
+    show();
+    clear.classList.add('show');
+    results.innerHTML = `<div class="gs-loading">${esc(T('hub.search.loading'))}</div>`;
+    const data = await loadGlobalSearchState();
+    if (!data) { results.innerHTML = `<div class="gs-empty">${esc(T('hub.search.loading'))}</div>`; return; }
+    const r = gsSearch(q, data);
+    if (!r) { hide(); return; }
+    const total = r.focus.length + r.wallet.length + r.orbit.length;
+    if (total === 0) {
+      results.innerHTML = `<div class="gs-empty">${esc(T('hub.search.empty'))}</div>
+        <div class="gs-empty" style="font-size:11px;margin-top:6px">${esc(T('hub.search.password_hint'))}</div>`;
+      return;
+    }
+    const section = (key, items, label) => {
+      if (!items.length) return '';
+      return `<div class="gs-section">
+        <div class="gs-section-head">
+          <span>${esc(label)} · ${items.length}</span>
+          <button class="gs-section-link" data-open="${key}">${esc(T('hub.search.open_app'))}</button>
+        </div>
+        ${items.map(it => `
+          <div class="gs-item" data-href="${esc(it._href)}">
+            <div class="gs-item-icon">${esc(it.icon)}</div>
+            <div class="gs-item-text">
+              ${it.titleHl}
+              <div class="gs-item-meta">${esc(it.meta || '')}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+    };
+    results.innerHTML = section('focus',  r.focus,  T('hub.search.section.focus'))
+                     + section('wallet', r.wallet, T('hub.search.section.wallet'))
+                     + section('orbit',  r.orbit,  T('hub.search.section.orbit'))
+                     + `<div style="margin-top:8px;padding:8px;font-size:11px;color:var(--text3);text-align:center">${esc(T('hub.search.password_hint'))}</div>`;
+    results.querySelectorAll('[data-href]').forEach(el => {
+      el.onclick = () => window.location.href = el.dataset.href;
+    });
+    results.querySelectorAll('[data-open]').forEach(el => {
+      el.onclick = () => window.location.href = el.dataset.open + '.html';
+    });
+  }
+
+  box.addEventListener('input', e => {
+    const q = e.target.value;
+    if (_gsTimer) clearTimeout(_gsTimer);
+    _gsTimer = setTimeout(() => run(q), 200);
+  });
+  box.addEventListener('keydown', e => { if (e.key === 'Escape') { box.value = ''; hide(); } });
+  clear.onclick = () => { box.value = ''; box.focus(); hide(); };
+
+  // Прелоадим кэш в фоне, чтобы первый ввод был мгновенный
+  loadGlobalSearchState();
 }
 </script>
 
